@@ -1,0 +1,21 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.map {
+    width: 400px;
+    height: 500px;
+}
+
+.popover-body {
+    position:absolute;
+    min-width: 180px;
+    text-align: center;
+    background: rgba(192, 240, 242, 0.6);
+    border-radius: 1em/5em;
+}

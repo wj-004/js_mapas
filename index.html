@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Mapa Buenos Aires</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="./css/bootstrap.min.css">
+
+    <!-- OpenLayers v6 CSS -->
+    <link rel="stylesheet" href="./lib/openlayers-v6.4.3-dist/ol.css">
+
+    <!-- Personalized CSS -->
+    <link rel="stylesheet" href="./css/styles.css">
+
+    <!-- Bootstrap JS -->
+    <script src="./js/jquery-3.5.1.slim.min.js" type="text/javascript"></script>
+    <script src="./js/bootstrap.bundle.min.js" type="text/javascript"></script>
+
+</head>
+
+<body>
+    <div class="col-12 col-sm-12 col-md-5 col-lg-5 col-xl-5" style="background-color: #015875; color:#ffffff">
+        <div class="row">
+            <a href="#" class="list-group-item list-group-item-action text-white bg-info">Mapa Interactivo</a>
+        </div>
+        <br>
+        <div id="listado" class="col-sm-12 col-md-7">
+            <div class="row backgroundContainer mt-4 mt-md-0">
+                <select name="featuresList" id="idSecciones" class="form-control w-100 select2-hidden-accessible"
+                    onchange="obtenerDatosFeature()" tabindex="-1" aria-hidden="true">
+                    <option value="-1">Todos</option>
+                </select>
+            </div>
+        </div>
+        <div class="row d-flex justify-content-center align-items-center">
+            <div class="col-sm-12 col-md-8">
+                <div class="row mt-4 mt-md-0">
+                    <div class="col-md-12">
+                        <div id="map" class="map" tabindex="0"></div>
+                        <div id="top-popup" title="" class="rounded"></div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                    <label class="btn btn-info active">
+                        <input type="radio" onclick="selectLayer()" name="mapShowOption" id="showSecciones"
+                            autocomplete="off" value='1' checked> SECCIONES
+                    </label>
+                    <label class="btn btn-info">
+                        <input type="radio" onclick="selectLayer()" name="mapShowOption" id="showDistritos"
+                            autocomplete="off" value='2'> DISTRITOS
+                    </label>
+                    <label class="btn btn-info ml-2">
+                        <input type="radio" onclick="selectLayer()" name="mapShowOption" id="initialShow"
+                            autocomplete="off" value='3'> RESTAURAR
+                    </label>
+
+                </div>
+
+                <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="showMapStreets" value="false" disabled>
+                    <label class="custom-control-label" for="showMapStreets">VISUALIZAR CALLES</label>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- OpenLayers JS -->
+    <script src="./lib/openlayers-v6.4.3-dist/ol.js"></script>
+    <script src="./js/index.js"></script>
+</body>
+
+</html>
