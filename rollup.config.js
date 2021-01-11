@@ -1,13 +1,25 @@
+import cjs from '@rollup/plugin-commonjs';
+import node from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
-
-// Configuracion por defecto para Rollup + TypeScript
-// Tomada de https://www.npmjs.com/package/@rollup/plugin-typescript
 
 export default {
   input: 'src/typescript/index.ts',
-  output: {
-    dir: 'output',
-    format: 'cjs'
-  },
-  plugins: [typescript()]
+  output: [
+    {file: 'js/index.js', format: 'iife'}
+  ],
+  plugins: [
+    typescript(),
+    node(),
+    cjs(),
+  ],
+  onwarn: function(warning, superOnWarn) {
+    /*
+     * skip certain warnings
+     * https://github.com/openlayers/openlayers/issues/10245
+     */
+    if (warning.code === 'THIS_IS_UNDEFINED') {
+      return;
+    }
+    superOnWarn(warning);
+  }
 };
