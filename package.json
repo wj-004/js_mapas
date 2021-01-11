@@ -1,0 +1,28 @@
+{
+  "name": "js_mapas",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wj-92/js_mapas.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wj-92/js_mapas/issues"
+  },
+  "homepage": "https://github.com/wj-92/js_mapas#readme",
+  "dependencies": {
+    "@rollup/plugin-typescript": "^8.1.0",
+    "ol": "^6.5.0",
+    "rollup": "^2.36.1",
+    "typescript": "^4.1.3"
+  }
+}
