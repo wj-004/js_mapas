@@ -3,23 +3,45 @@ import { fromLonLat } from 'ol/proj';
 import OSM from 'ol/source/OSM'
 import FullScreenControl from 'ol/control/FullScreen'
 import TileLayer from 'ol/layer/Tile'
+import { getLayer } from './util/getLayer';
+import * as Estilos from './Estilos'
+import VectorLayer from 'ol/layer/Vector';
 
 export class Mapa {
 
-    private olMap: Map;
+    private map: Map;
 
-    constructor(private contenedor: HTMLElement) {
-        const osm = new TileLayer({
+    // Capas del mapa
+    private openStreetMap: TileLayer;
+    private distritos: VectorLayer;
+    private secciones: VectorLayer;
+
+    constructor(private contenedor: HTMLElement) {}
+    
+    async iniciarlizar() {
+        // Cargar mapa de OpenStreetMap
+        this.openStreetMap = new TileLayer({
             source: new OSM({ attributions: [] })
         })
 
-        // Esto controla el zoom para que se vea solo Buenos Aires (provincia)
+        // Cargar secciones y distritos
+        const [distritos, secciones] = await Promise.all([this.capaDistritos(), this.capaSecciones()])
+        this.distritos = distritos;
+        this.secciones = secciones;
+
+        // Establecer visibilidad
+        this.openStreetMap.setVisible(false)
+        this.distritos.setVisible(false)
+        this.secciones.setVisible(true)
+
+        // Enfocar Buenos Aires
         const minExtents = fromLonLat([-64, -42])
         const maxExtents = fromLonLat([-56, -32])
 
-        this.olMap = new Map({
-            target: contenedor,
-            layers: [osm],
+        // Mostrar mapa
+        this.map = new Map({
+            target: this.contenedor,
+            layers: [this.openStreetMap, this.distritos, this.secciones],
             view: new View({
                 center: fromLonLat([-60, -37.3]),
                 zoom: 0,
@@ -31,17 +53,29 @@ export class Mapa {
                 ]
             }),
             controls: [new FullScreenControl()]
-          });
+        });
     }
-    
-    iniciarlizar() {
-        // Cargar secciones y distritos
 
-        // Cargar mapa de OpenStreetMap
+    /**
+     * Crea y configura la capa de distritos
+     */
+    private capaDistritos(): Promise<VectorLayer> {
+        return getLayer('data/vector_data/municipios-buenos_aires.geojson')
+            .then(distritos => {
+                distritos.setStyle(Estilos.POR_DEFECTO)
+                return distritos
+            })
+    }
 
-        // Enfocar Buenos Aires
-
-        // Mostrar mapa
+    /**
+     * Crea y configura la capa de secciones
+     */
+    private capaSecciones(): Promise<VectorLayer> {
+        return getLayer('data/vector_data/secciones-buenos_aires.geojson')
+            .then(secciones => {
+                secciones.setStyle(Estilos.POR_DEFECTO)
+                return secciones
+            })
     }
 
     mostrarCalles() {}
