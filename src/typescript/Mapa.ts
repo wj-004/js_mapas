@@ -78,9 +78,13 @@ export class Mapa {
             })
     }
 
-    mostrarCalles() {}
+    mostrarCalles() {
+        this.openStreetMap.setVisible(true)
+    }
 
-    ocultarCalles() {}
+    ocultarCalles() {
+        this.openStreetMap.setVisible(false)
+    }
 
     mostrarDistritos() {
         this.distritos.setVisible(true)

@@ -16,3 +16,12 @@ showSecciones.onclick = () => {
     mapa.ocultarDistritos()
     mapa.mostrarSecciones()
 }
+
+const showMapStreets: HTMLInputElement = document.querySelector("#showMapStreets")
+showMapStreets.onchange = () => {
+    if (showMapStreets.checked) {
+        mapa.mostrarCalles()
+    } else {
+        mapa.ocultarCalles()
+    }
+}
