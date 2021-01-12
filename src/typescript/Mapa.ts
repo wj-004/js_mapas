@@ -81,4 +81,20 @@ export class Mapa {
     mostrarCalles() {}
 
     ocultarCalles() {}
+
+    mostrarDistritos() {
+        this.distritos.setVisible(true)
+    }
+
+    ocultarDistritos() {
+        this.distritos.setVisible(false)
+    }
+
+    mostrarSecciones() {
+        this.secciones.setVisible(true)
+    }
+
+    ocultarSecciones() {
+        this.secciones.setVisible(false)
+    }
 }
