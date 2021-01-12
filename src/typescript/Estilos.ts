@@ -18,7 +18,7 @@ export const SELECCIONADO = new Style({
     }),
 });
 
-export const MOUSE_HOVER =new Style({
+export const RESALTADO = new Style({
     fill:new Fill({ color: 'rgba(255, 255, 255, 1)'}),
     stroke:new Stroke({
         color: [192, 237, 242, 1],

@@ -1,4 +1,4 @@
-import { Map, View } from 'ol'
+import { Feature, Map, MapBrowserEvent, View } from 'ol'
 import { fromLonLat } from 'ol/proj';
 import OSM from 'ol/source/OSM'
 import FullScreenControl from 'ol/control/FullScreen'
@@ -6,6 +6,7 @@ import TileLayer from 'ol/layer/Tile'
 import { getLayer } from './util/getLayer';
 import * as Estilos from './Estilos'
 import VectorLayer from 'ol/layer/Vector';
+import { FeatureLike } from 'ol/Feature';
 
 export class Mapa {
 
@@ -15,6 +16,8 @@ export class Mapa {
     private openStreetMap: TileLayer;
     private distritos: VectorLayer;
     private secciones: VectorLayer;
+
+    private elementoResaltado: FeatureLike = null;
 
     constructor(private contenedor: HTMLElement) {}
     
@@ -54,6 +57,8 @@ export class Mapa {
             }),
             controls: [new FullScreenControl()]
         });
+
+        this.map.on('pointermove', (e) => this.alMoverMouse(e))
     }
 
     /**
@@ -76,6 +81,19 @@ export class Mapa {
                 secciones.setStyle(Estilos.POR_DEFECTO)
                 return secciones
             })
+    }
+
+    alMoverMouse(evento: MapBrowserEvent) {
+        if (this.elementoResaltado !== null) {
+            (this.elementoResaltado as Feature).setStyle(undefined)
+            this.elementoResaltado = null;
+        }
+
+        this.map.forEachFeatureAtPixel(evento.pixel, feature => {
+            this.elementoResaltado = feature;
+            (this.elementoResaltado as Feature).setStyle(Estilos.RESALTADO)
+            return true;
+        })
     }
 
     mostrarCalles() {
