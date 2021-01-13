@@ -119,8 +119,8 @@ export class Mapa {
     }
 
     private alClickearSeccion(seccion: Feature) {
-        this.enfocarSeccion(seccion)
         this._nivel = Nivel.UNA_SECCION
+        this.enfocarSeccion(seccion)
     }
 
     private enfocarFeature(feature: Feature) {
@@ -128,8 +128,9 @@ export class Mapa {
     }
 
     private alClickearDistrito(distrito: Feature) {
-        this.enfocarDistrito(distrito)
         this._nivel = Nivel.UN_DISTRITO
+        this.ocultarDistritos()
+        this.enfocarDistrito(distrito)
     }
 
     mostrarCalles() {
@@ -141,12 +142,7 @@ export class Mapa {
     }
 
     mostrarDistritos() {
-        this._nivel = Nivel.TODOS_LOS_DISTRITOS
         this.todosLosDistritos.setVisible(true)
-        this.listarOpcionesEnSelect(
-            this.todosLosDistritos.getSource().getFeatures(),
-            distritoToNombre
-        )
     }
 
     ocultarDistritos() {
@@ -158,16 +154,39 @@ export class Mapa {
     }
 
     mostrarSecciones() {
-        this._nivel = Nivel.TODAS_LAS_SECCIONES
         this.secciones.setVisible(true)
-        this.listarOpcionesEnSelect(
-            this.secciones.getSource().getFeatures(),
-            seccionToNombre
-        )
     }
 
     ocultarSecciones() {
         this.secciones.setVisible(false)
+    }
+
+    enfocarDistritos() {
+        this._nivel = Nivel.TODOS_LOS_DISTRITOS
+
+        this.ocultarSecciones()
+        this.ocultarDistritosEnfocados()
+        this.mostrarDistritos()
+        this.enfocarBuenosAires()
+
+        this.listarOpcionesEnSelect(
+            this.todosLosDistritos.getSource().getFeatures(),
+            distritoToNombre
+        )
+    }
+
+    enfocarSecciones() {
+        this._nivel = Nivel.TODAS_LAS_SECCIONES
+
+        this.ocultarDistritos()
+        this.ocultarDistritosEnfocados()
+        this.mostrarSecciones()
+        this.enfocarBuenosAires()
+
+        this.listarOpcionesEnSelect(
+            this.secciones.getSource().getFeatures(),
+            seccionToNombre
+        )
     }
 
     enfocarBuenosAires() {
@@ -194,6 +213,7 @@ export class Mapa {
             .find(d => d.get('id') === id)
         
         if (distrito) {
+            this.ocultarDistritos()
             this.enfocarDistrito(distrito)
         } else {
             throw new Error(`No hay seccion con id = ${id}`)

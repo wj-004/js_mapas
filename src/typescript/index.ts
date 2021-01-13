@@ -5,18 +5,14 @@ const mapa = new Mapa(document.querySelector("#map"))
 
 mapa.iniciarlizar()
 
-const showDistritos: HTMLButtonElement = document.querySelector("#showDistritos")
-showDistritos.onclick = () => {
-    mapa.ocultarSecciones()
-    mapa.mostrarDistritos()
-    mapa.enfocarBuenosAires()
+const botonEnfocarDistritos: HTMLButtonElement = document.querySelector("#showDistritos")
+botonEnfocarDistritos.onclick = () => {
+    mapa.enfocarDistritos()
 }
 
-const showSecciones: HTMLButtonElement = document.querySelector("#showSecciones")
-showSecciones.onclick = () => {
-    mapa.ocultarDistritos()
-    mapa.mostrarSecciones()
-    mapa.enfocarBuenosAires()
+const botonEnfocarSecciones: HTMLButtonElement = document.querySelector("#showSecciones")
+botonEnfocarSecciones.onclick = () => {
+    mapa.enfocarSecciones()
 }
 
 const showMapStreets: HTMLInputElement = document.querySelector("#showMapStreets")
