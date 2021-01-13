@@ -22,6 +22,8 @@ import { EventoEnfocar } from './eventos/EventoEnfocar';
 import { aTitulo } from '../util/aTitulo';
 import Point from 'ol/geom/Point';
 import { getPinPath } from '../util/getPinPath';
+import * as Interacciones from 'ol/interaction';
+import * as Control from 'ol/control';
 
 const extentBuenosAires = [ ...fromLonLat([-64, -42]), ...fromLonLat([-56, -32]) ] as Extent
 
@@ -104,9 +106,26 @@ export class Mapa {
                 zoom: 0,
                 extent: extentBuenosAires
             }),
-            controls: [new FullScreenControl()]
+            controls: Control.defaults({
+                attribution: false,
+                zoom: false
+            }).extend([
+                new FullScreenControl()
+            ]),
+            interactions: Interacciones.defaults({
+                dragPan: true,
+                altShiftDragRotate: false,
+                doubleClickZoom: false,
+                mouseWheelZoom: true,
+                pinchZoom: false,
+                shiftDragZoom: false,
+                keyboard: false
+            })
         });
 
+        this.establecerInteraccion(Interacciones.MouseWheelZoom, false)
+        this.establecerInteraccion(Interacciones.DragPan, false)
+        
         // Establecer listeners
         this.map.on('pointermove', (e) => this.alMoverMouse(e))
         this.map.on('click', (e) => this.alHacerClick(e))
@@ -234,6 +253,8 @@ export class Mapa {
         )
 
         this.tagSelect.value = OPCION_TODOS
+        this.establecerInteraccion(Interacciones.MouseWheelZoom, true)
+        this.establecerInteraccion(Interacciones.DragPan, true)
     }
 
     enfocarSecciones() {
@@ -255,6 +276,8 @@ export class Mapa {
 
     enfocarBuenosAires() {
         this.map.getView().fit(extentBuenosAires)
+        this.establecerInteraccion(Interacciones.MouseWheelZoom, false)
+        this.establecerInteraccion(Interacciones.DragPan, false)
     }
 
     enfocarSeccionPorId(id: number) {
@@ -337,6 +360,8 @@ export class Mapa {
         this.distritosEnfocados.setVisible(true)
 
         this.tagSelect.value = String(distrito.get('id'))
+        this.establecerInteraccion(Interacciones.MouseWheelZoom, true)
+        this.establecerInteraccion(Interacciones.DragPan, true)
     }
 
     private enfocarSeccion(seccion: Feature) {
@@ -366,6 +391,8 @@ export class Mapa {
         )
 
         this.tagSelect.value = OPCION_TODOS;
+        this.establecerInteraccion(Interacciones.MouseWheelZoom, true)
+        this.establecerInteraccion(Interacciones.DragPan, true)
     }
 
     private listarOpcionesEnSelect(features: Feature[], extraerNombre: Funcion<Feature, string>) {
@@ -482,5 +509,13 @@ export class Mapa {
             console.error("Error crearIconFeature function: " + e);
         }
         return iconFeature;
+    }
+    
+    establecerInteraccion(interaccion, habilitar = true) {
+        this.map.getInteractions().forEach(function (e) {
+            if (e instanceof interaccion) {
+                e.setActive(habilitar);
+            }
+        });
     }
 }
