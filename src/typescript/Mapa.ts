@@ -4,6 +4,9 @@ import OSM from 'ol/source/OSM'
 import FullScreenControl from 'ol/control/FullScreen'
 import TileLayer from 'ol/layer/Tile'
 import { getLayer } from './util/getLayer';
+import { seccionToNombre } from './util/seccionToNombre';
+import { distritoToNombre } from './util/distritoToNombre';
+import { Funcion } from './util/Funcion';
 import * as Estilos from './Estilos'
 import VectorLayer from 'ol/layer/Vector';
 import { FeatureLike } from 'ol/Feature';
@@ -39,12 +42,19 @@ export class Mapa {
         this.todosLosDistritos = distritos;
         this.secciones = secciones;
         this.distritosEnfocados = new VectorLayer({ source: new VectorSource() });
-        this.distritosEnfocados.setStyle(Estilos.POR_DEFECTO)
 
         // Establecer visibilidad
         this.openStreetMap.setVisible(false)
         this.todosLosDistritos.setVisible(false)
         this.secciones.setVisible(true)
+
+        // Establecer estilos 
+        const capas = [this.openStreetMap, this.todosLosDistritos, this.distritosEnfocados, this.secciones]
+        for (let capa of capas) {
+            if (capa !== this.openStreetMap) {
+                (capa as VectorLayer).setStyle(Estilos.POR_DEFECTO)
+            }
+        }
 
         // Mostrar mapa
         this.map = new Map({
@@ -60,6 +70,11 @@ export class Mapa {
 
         this.map.on('pointermove', (e) => this.alMoverMouse(e))
         this.map.on('click', (e) => this.alHacerClick(e))
+
+        this.listarOpcionesEnSelect(
+            this.secciones.getSource().getFeatures(),
+            seccionToNombre
+        )
     }
 
     /**
@@ -67,10 +82,6 @@ export class Mapa {
      */
     private capaDistritos(): Promise<VectorLayer> {
         return getLayer('data/vector_data/municipios-buenos_aires.geojson')
-            .then(distritos => {
-                distritos.setStyle(Estilos.POR_DEFECTO)
-                return distritos
-            })
     }
 
     /**
@@ -78,10 +89,6 @@ export class Mapa {
      */
     private capaSecciones(): Promise<VectorLayer> {
         return getLayer('data/vector_data/secciones-buenos_aires.geojson')
-            .then(secciones => {
-                secciones.setStyle(Estilos.POR_DEFECTO)
-                return secciones
-            })
     }
 
     alMoverMouse(evento: MapBrowserEvent) {
@@ -124,8 +131,11 @@ export class Mapa {
         this.distritosEnfocados.getSource().clear()
         this.distritosEnfocados.getSource().addFeatures(distritosQueEnfocar)
         this.distritosEnfocados.setVisible(true)
-        
-        // ???
+
+        this.listarOpcionesEnSelect(
+            distritosQueEnfocar,
+            distritoToNombre
+        )
     }
 
     private enfocarFeature(feature: Feature) {
@@ -147,6 +157,10 @@ export class Mapa {
     mostrarDistritos() {
         this.todosLosDistritos.setVisible(true)
         this.enfocarBuenosAires()
+        this.listarOpcionesEnSelect(
+            this.todosLosDistritos.getSource().getFeatures(),
+            distritoToNombre
+        )
     }
 
     ocultarDistritos() {
@@ -160,6 +174,10 @@ export class Mapa {
     mostrarSecciones() {
         this.secciones.setVisible(true)
         this.enfocarBuenosAires()
+        this.listarOpcionesEnSelect(
+            this.secciones.getSource().getFeatures(),
+            seccionToNombre
+        )
     }
 
     ocultarSecciones() {
@@ -168,5 +186,32 @@ export class Mapa {
 
     enfocarBuenosAires() {
         this.map.getView().fit(extentBuenosAires)
+        this.listarOpcionesEnSelect(
+            this.secciones.getSource().getFeatures(),
+            seccionToNombre
+        )
+    }
+
+    private listarOpcionesEnSelect(features: Feature[], extraerNombre: Funcion<Feature, string>) {
+        const opciones = features
+            .map(feature => ({ nombre: extraerNombre(feature), valor: feature.get('id') }))
+            .sort((a, b) => a.nombre.localeCompare(b.nombre))
+            .map(data => this.crearOptionTag(data.nombre, data.valor))
+        
+        const select = document.querySelector('#idSecciones')
+        while (select.firstChild) {
+            select.removeChild(select.firstChild)
+        }
+        for (let opcion of opciones) {
+            select.appendChild(opcion)
+        }
+        select.prepend(this.crearOptionTag('Todo', -1))
+    }
+
+    private crearOptionTag(nombre: string, valor: number) {
+        const opt = document.createElement('option')
+        opt.value = String(valor),
+        opt.appendChild(document.createTextNode(nombre))
+        return opt
     }
 }
