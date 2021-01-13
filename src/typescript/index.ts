@@ -14,7 +14,7 @@ function inicializar() {
     
     window['mapa'] = mapa;
 
-    (window as any).Livewire.emit('verDetalle', { id: 132 })
+    // (window as any).Livewire.emit('verDetalle', { id: 132 })
 
     window.addEventListener('show-map', (evento: any) => {
         console.log(evento)
