@@ -13,6 +13,7 @@ import { FeatureLike } from 'ol/Feature';
 import { DistritosPorIdSeccion } from './data/DistritosPorSeccion'
 import { Extent } from 'ol/extent';
 import VectorSource from 'ol/source/Vector';
+import { Nivel } from './Nivel'
 
 const extentBuenosAires = [ ...fromLonLat([-64, -42]), ...fromLonLat([-56, -32]) ] as Extent
 
@@ -28,6 +29,9 @@ export class Mapa {
 
     private elementoResaltado: FeatureLike = null;
     private elementoSeleccionado: FeatureLike = null;
+
+    private _nivel: Nivel = Nivel.TODAS_LAS_SECCIONES;
+    get nivel(): Nivel { return this._nivel }
 
     constructor(private contenedor: HTMLElement) {}
     
@@ -115,7 +119,100 @@ export class Mapa {
     }
 
     private alClickearSeccion(seccion: Feature) {
-        // Enfocar la seccion clickeada
+        this.enfocarSeccion(seccion)
+        this._nivel = Nivel.UNA_SECCION
+    }
+
+    private enfocarFeature(feature: Feature) {
+        this.map.getView().fit(feature.getGeometry().getExtent())
+    }
+
+    private alClickearDistrito(distrito: Feature) {
+        this.enfocarDistrito(distrito)
+        this._nivel = Nivel.UN_DISTRITO
+    }
+
+    mostrarCalles() {
+        this.openStreetMap.setVisible(true)
+    }
+
+    ocultarCalles() {
+        this.openStreetMap.setVisible(false)
+    }
+
+    mostrarDistritos() {
+        this._nivel = Nivel.TODOS_LOS_DISTRITOS
+        this.todosLosDistritos.setVisible(true)
+        this.listarOpcionesEnSelect(
+            this.todosLosDistritos.getSource().getFeatures(),
+            distritoToNombre
+        )
+    }
+
+    ocultarDistritos() {
+        this.todosLosDistritos.setVisible(false)
+    }
+
+    ocultarDistritosEnfocados() {
+        this.distritosEnfocados.setVisible(false)
+    }
+
+    mostrarSecciones() {
+        this._nivel = Nivel.TODAS_LAS_SECCIONES
+        this.secciones.setVisible(true)
+        this.listarOpcionesEnSelect(
+            this.secciones.getSource().getFeatures(),
+            seccionToNombre
+        )
+    }
+
+    ocultarSecciones() {
+        this.secciones.setVisible(false)
+    }
+
+    enfocarBuenosAires() {
+        this.map.getView().fit(extentBuenosAires)
+    }
+
+    enfocarSeccionPorId(id: number) {
+        const seccion = this.secciones
+            .getSource()
+            .getFeatures()
+            .find(s => s.get('id') === id)
+        
+        if (seccion) {
+            this.enfocarSeccion(seccion)
+        } else {
+            throw new Error(`No hay seccion con id = ${id}`)
+        }
+    }
+
+    enfocarDistritoPorId(id: number) {
+        const distrito = this.todosLosDistritos
+            .getSource()
+            .getFeatures()
+            .find(d => d.get('id') === id)
+        
+        if (distrito) {
+            this.enfocarDistrito(distrito)
+        } else {
+            throw new Error(`No hay seccion con id = ${id}`)
+        }
+    }
+
+    private enfocarDistrito(distrito: Feature) {
+        this._nivel = Nivel.UN_DISTRITO
+
+        this.enfocarFeature(distrito)
+
+        this.distritosEnfocados.getSource().clear()
+        this.distritosEnfocados.getSource().addFeatures([distrito])
+        this.distritosEnfocados.setVisible(true)
+    }
+
+    private enfocarSeccion(seccion: Feature) {
+        this._nivel = Nivel.UNA_SECCION
+
         this.enfocarFeature(seccion)
         const seccionId: number = seccion.get('id');
 
@@ -135,60 +232,6 @@ export class Mapa {
         this.listarOpcionesEnSelect(
             distritosQueEnfocar,
             distritoToNombre
-        )
-    }
-
-    private enfocarFeature(feature: Feature) {
-        this.map.getView().fit(feature.getGeometry().getExtent())
-    }
-
-    private alClickearDistrito(distrito: Feature) {
-        console.log('Distrito')
-    }
-
-    mostrarCalles() {
-        this.openStreetMap.setVisible(true)
-    }
-
-    ocultarCalles() {
-        this.openStreetMap.setVisible(false)
-    }
-
-    mostrarDistritos() {
-        this.todosLosDistritos.setVisible(true)
-        this.enfocarBuenosAires()
-        this.listarOpcionesEnSelect(
-            this.todosLosDistritos.getSource().getFeatures(),
-            distritoToNombre
-        )
-    }
-
-    ocultarDistritos() {
-        this.todosLosDistritos.setVisible(false)
-    }
-
-    ocultarDistritosEnfocados() {
-        this.distritosEnfocados.setVisible(false)
-    }
-
-    mostrarSecciones() {
-        this.secciones.setVisible(true)
-        this.enfocarBuenosAires()
-        this.listarOpcionesEnSelect(
-            this.secciones.getSource().getFeatures(),
-            seccionToNombre
-        )
-    }
-
-    ocultarSecciones() {
-        this.secciones.setVisible(false)
-    }
-
-    enfocarBuenosAires() {
-        this.map.getView().fit(extentBuenosAires)
-        this.listarOpcionesEnSelect(
-            this.secciones.getSource().getFeatures(),
-            seccionToNombre
         )
     }
 
