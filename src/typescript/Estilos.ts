@@ -3,10 +3,10 @@ import Stroke from "ol/style/Stroke";
 import Style from "ol/style/Style";
 
 export const POR_DEFECTO = new Style({
-    fill: new Fill({ color: 'rgb(1, 88, 117, 1)' }),
+    fill: new Fill({ color: '#0B3C4C' }),
     stroke: new Stroke({
-        color: [224, 224, 224, 1],
-        width: 1.2,
+        color: '#01A6E6',
+        width: 2,
     })
 })
 
@@ -19,9 +19,9 @@ export const SELECCIONADO = new Style({
 });
 
 export const RESALTADO = new Style({
-    fill:new Fill({ color: 'rgba(255, 255, 255, 1)'}),
-    stroke:new Stroke({
-        color: [192, 237, 242, 1],
+    fill: new Fill({ color: '#0c4659' }),
+    stroke: new Stroke({
+        color: '#01A6E6',
         width: 4,
-    }),
-});
+    })
+})
