@@ -36,6 +36,8 @@ export class Mapa {
     private _nivel: Nivel = Nivel.TODAS_LAS_SECCIONES;
     get nivel(): Nivel { return this._nivel }
 
+    private callbackAlClickearCualquierDistrito: Funcion<number, void>;
+
     constructor(private contenedor: HTMLElement) {}
     
     async iniciarlizar() {
@@ -134,6 +136,9 @@ export class Mapa {
         this._nivel = Nivel.UN_DISTRITO
         this.ocultarDistritos()
         this.enfocarDistrito(distrito)
+        if (this.callbackAlClickearCualquierDistrito) {
+            this.callbackAlClickearCualquierDistrito(distrito.get('id'))
+        }
     }
 
     mostrarCalles() {
@@ -219,6 +224,9 @@ export class Mapa {
             this.ocultarDistritos()
             this.enfocarDistrito(distrito)
             this.mostrarDistritoEnSelect(id)
+            if (this.callbackAlClickearCualquierDistrito) {
+                this.callbackAlClickearCualquierDistrito(id)
+            }
         } else {
             throw new Error(`No hay seccion con id = ${id}`)
         }
@@ -320,7 +328,7 @@ export class Mapa {
         throw new Error(`Aun no esta implementado!`)
     }
 
-    alClickearCualquierDistrito(callback) {
-        throw new Error(`Aun no esta implementado!`)
+    alClickearCualquierDistrito(callback: Funcion<number, void>) {
+        this.callbackAlClickearCualquierDistrito = callback
     }
 }

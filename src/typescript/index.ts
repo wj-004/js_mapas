@@ -14,6 +14,16 @@ function inicializar() {
     
     window['mapa'] = mapa;
 
+    mapa.alClickearCualquierDistrito(id => {
+        console.log('Verificando si hay livewire...')
+        // @ts-ignore
+        if (typeof livewire !== 'undefined') {
+            // @ts-ignore
+            livewire.emit('verDetalle', { id })
+            console.log('evento emitido!!')
+        }
+    })
+
     window.addEventListener('show-map', (evento: any) => {
         console.log(evento)
         const id = evento.detail.data.id as number;
@@ -44,13 +54,6 @@ function inicializar() {
         mapa.ocultarDistritosEnfocados()
         mapa.mostrarSecciones()
         mapa.enfocarBuenosAires()
-
-        // @ts-ignore (ignorar advertencia de que Livewire no existe)
-        if (Livewire) {
-            // @ts-ignore (ignorar advertencia de que Livewire no existe)
-            Livewire.emit('verDetalle', { id: 132 })
-            console.log('Emitiendo evento de LW!!')
-        }
     }
     
     const select: HTMLSelectElement = document.querySelector("#idSecciones")
