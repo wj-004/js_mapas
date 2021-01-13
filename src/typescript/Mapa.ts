@@ -14,6 +14,9 @@ import { DistritosPorIdSeccion } from './data/DistritosPorSeccion'
 import { Extent } from 'ol/extent';
 import VectorSource from 'ol/source/Vector';
 import { Nivel } from './Nivel'
+import Style from 'ol/style/Style';
+import Fill from 'ol/style/Fill';
+import Stroke from 'ol/style/Stroke';
 
 const extentBuenosAires = [ ...fromLonLat([-64, -42]), ...fromLonLat([-56, -32]) ] as Extent
 
@@ -217,6 +220,29 @@ export class Mapa {
             this.enfocarDistrito(distrito)
         } else {
             throw new Error(`No hay seccion con id = ${id}`)
+        }
+    }
+
+    pintarDistritoPorID(id: number, relleno?: string, borde?: string) {
+        const distrito = this.todosLosDistritos
+            .getSource()
+            .getFeatures()
+            .find(d => d.get('id') === id)
+    
+        const estilo = {}
+
+        if (relleno) {
+            estilo['fill'] = new Fill({ color: relleno })
+        }
+
+        if (borde) {
+            estilo['stroke'] = new Stroke({ color: borde })
+        }
+
+        if (distrito) {
+            distrito.setStyle(new Style(estilo))
+        } else {
+            throw new Error(`No hay distrito con id = ${id}`)
         }
     }
 

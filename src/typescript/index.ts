@@ -5,6 +5,8 @@ const mapa = new Mapa(document.querySelector("#map"))
 
 mapa.iniciarlizar()
 
+window['mapa'] = mapa
+
 const botonEnfocarDistritos: HTMLButtonElement = document.querySelector("#showDistritos")
 botonEnfocarDistritos.onclick = () => {
     mapa.enfocarDistritos()
