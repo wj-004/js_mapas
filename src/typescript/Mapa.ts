@@ -303,4 +303,12 @@ export class Mapa {
         opt.appendChild(document.createTextNode(nombre))
         return opt
     }
+
+    alClickerUnDistrito(id: number, callback) {
+        throw new Error(`Aun no esta implementado!`)
+    }
+
+    alClickearCualquierDistrito(callback) {
+        throw new Error(`Aun no esta implementado!`)
+    }
 }

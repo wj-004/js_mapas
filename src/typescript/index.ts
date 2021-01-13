@@ -5,6 +5,10 @@ const mapa = new Mapa(document.querySelector("#map"))
 
 mapa.iniciarlizar()
 
+// Revisar si hay un distrito/seccion enfocado
+//  Si la hay, enfocar el mapa en el feature correspondiente
+//  Emito evento LW con el ID del distrito/seccion
+
 window['mapa'] = mapa
 
 const botonEnfocarDistritos: HTMLButtonElement = document.querySelector("#showDistritos")
@@ -36,15 +40,30 @@ initialShow.onclick = () => {
 const select: HTMLSelectElement = document.querySelector("#idSecciones")
 select.onchange = () => {
     const id = Number(select.value)
-    switch (mapa.nivel) {
-        case Nivel.TODAS_LAS_SECCIONES:
-            mapa.enfocarSeccionPorId(id)
-            break
-        case Nivel.TODOS_LOS_DISTRITOS:
-            mapa.enfocarDistritoPorId(id)
-            break
-        case Nivel.UNA_SECCION:
-            mapa.enfocarDistritoPorId(id)
-            break
+    if (id === -1) {
+        switch (mapa.nivel) {
+            case Nivel.TODAS_LAS_SECCIONES:
+                mapa.enfocarSecciones()
+                break
+            case Nivel.TODOS_LOS_DISTRITOS:
+                mapa.enfocarDistritos()
+                break
+            case Nivel.UNA_SECCION:
+                break
+            case Nivel.UN_DISTRITO:
+                break
+        }
+    } else {
+        switch (mapa.nivel) {
+            case Nivel.TODAS_LAS_SECCIONES:
+                mapa.enfocarSeccionPorId(id)
+                break
+            case Nivel.TODOS_LOS_DISTRITOS:
+                mapa.enfocarDistritoPorId(id)
+                break
+            case Nivel.UNA_SECCION:
+                mapa.enfocarDistritoPorId(id)
+                break
+        }
     }
 }
