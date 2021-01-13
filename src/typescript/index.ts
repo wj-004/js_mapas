@@ -12,7 +12,9 @@ function inicializar() {
     //  Si la hay, enfocar el mapa en el feature correspondiente
     //  Emito evento LW con el ID del distrito/seccion
     
-    window['mapa'] = mapa
+    window['mapa'] = mapa;
+
+    (window as any).Livewire.emit('verDetalle', { id: 132 })
 
     window.addEventListener('show-map', (evento: any) => {
         console.log(evento)
