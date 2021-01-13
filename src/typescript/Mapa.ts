@@ -88,14 +88,14 @@ export class Mapa {
      * Crea y configura la capa de distritos
      */
     private capaDistritos(): Promise<VectorLayer> {
-        return getLayer('data/vector_data/municipios-buenos_aires.geojson')
+        return getLayer('../data/vector_data/municipios-buenos_aires.geojson')
     }
 
     /**
      * Crea y configura la capa de secciones
      */
     private capaSecciones(): Promise<VectorLayer> {
-        return getLayer('data/vector_data/secciones-buenos_aires.geojson')
+        return getLayer('../data/vector_data/secciones-buenos_aires.geojson')
     }
 
     alMoverMouse(evento: MapBrowserEvent) {

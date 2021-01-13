@@ -13,6 +13,11 @@ function inicializar() {
     //  Emito evento LW con el ID del distrito/seccion
     
     window['mapa'] = mapa
+
+    window.addEventListener('show-map', (evento: any) => {
+        const id = evento.detail.data.distrito_id as number;
+        mapa.enfocarDistritoPorId(id)
+    })
     
     const botonEnfocarDistritos: HTMLButtonElement = document.querySelector("#showDistritos")
     botonEnfocarDistritos.onclick = () => {
