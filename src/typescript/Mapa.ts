@@ -218,6 +218,7 @@ export class Mapa {
         if (distrito) {
             this.ocultarDistritos()
             this.enfocarDistrito(distrito)
+            this.mostrarDistritoEnSelect(id)
         } else {
             throw new Error(`No hay seccion con id = ${id}`)
         }
@@ -251,6 +252,7 @@ export class Mapa {
 
         this.enfocarFeature(distrito)
 
+        this.ocultarSecciones()
         this.distritosEnfocados.getSource().clear()
         this.distritosEnfocados.getSource().addFeatures([distrito])
         this.distritosEnfocados.setVisible(true)
@@ -263,6 +265,7 @@ export class Mapa {
         const seccionId: number = seccion.get('id');
 
         this.secciones.setVisible(false)
+        this.todosLosDistritos.setVisible(false)
 
         // Mostrar (solo?) los distritos de la seccion
         const idDistritos: number[] = DistritosPorIdSeccion[seccionId]
@@ -302,6 +305,15 @@ export class Mapa {
         opt.value = String(valor),
         opt.appendChild(document.createTextNode(nombre))
         return opt
+    }
+
+    private mostrarDistritoEnSelect(id: number) {
+        this.listarOpcionesEnSelect(
+            this.todosLosDistritos.getSource().getFeatures(),
+            distritoToNombre
+        )
+        const select: HTMLSelectElement = document.querySelector('#idSecciones')
+        select.value = String(id)
     }
 
     alClickerUnDistrito(id: number, callback) {

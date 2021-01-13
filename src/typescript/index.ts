@@ -15,6 +15,7 @@ function inicializar() {
     window['mapa'] = mapa
 
     window.addEventListener('show-map', (evento: any) => {
+        console.log(evento)
         const id = evento.detail.data.distrito_id as number;
         mapa.enfocarDistritoPorId(id)
     })
