@@ -25,3 +25,10 @@ showMapStreets.onchange = () => {
         mapa.ocultarCalles()
     }
 }
+
+const initialShow: HTMLButtonElement = document.querySelector("#initialShow")
+initialShow.onclick = () => {
+    mapa.ocultarDistritosEnfocados()
+    mapa.mostrarSecciones()
+    mapa.enfocarBuenosAires()
+}

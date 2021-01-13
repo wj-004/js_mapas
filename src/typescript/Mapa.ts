@@ -7,6 +7,11 @@ import { getLayer } from './util/getLayer';
 import * as Estilos from './Estilos'
 import VectorLayer from 'ol/layer/Vector';
 import { FeatureLike } from 'ol/Feature';
+import { DistritosPorIdSeccion } from './data/DistritosPorSeccion'
+import { Extent } from 'ol/extent';
+import VectorSource from 'ol/source/Vector';
+
+const extentBuenosAires = [ ...fromLonLat([-64, -42]), ...fromLonLat([-56, -32]) ] as Extent
 
 export class Mapa {
 
@@ -14,10 +19,12 @@ export class Mapa {
 
     // Capas del mapa
     private openStreetMap: TileLayer;
-    private distritos: VectorLayer;
+    private todosLosDistritos: VectorLayer;
     private secciones: VectorLayer;
+    private distritosEnfocados: VectorLayer;
 
     private elementoResaltado: FeatureLike = null;
+    private elementoSeleccionado: FeatureLike = null;
 
     constructor(private contenedor: HTMLElement) {}
     
@@ -29,36 +36,30 @@ export class Mapa {
 
         // Cargar secciones y distritos
         const [distritos, secciones] = await Promise.all([this.capaDistritos(), this.capaSecciones()])
-        this.distritos = distritos;
+        this.todosLosDistritos = distritos;
         this.secciones = secciones;
+        this.distritosEnfocados = new VectorLayer({ source: new VectorSource() });
+        this.distritosEnfocados.setStyle(Estilos.POR_DEFECTO)
 
         // Establecer visibilidad
         this.openStreetMap.setVisible(false)
-        this.distritos.setVisible(false)
+        this.todosLosDistritos.setVisible(false)
         this.secciones.setVisible(true)
-
-        // Enfocar Buenos Aires
-        const minExtents = fromLonLat([-64, -42])
-        const maxExtents = fromLonLat([-56, -32])
 
         // Mostrar mapa
         this.map = new Map({
             target: this.contenedor,
-            layers: [this.openStreetMap, this.distritos, this.secciones],
+            layers: [this.openStreetMap, this.todosLosDistritos, this.distritosEnfocados, this.secciones],
             view: new View({
                 center: fromLonLat([-60, -37.3]),
                 zoom: 0,
-                extent: [
-                    minExtents[0],
-                    minExtents[1],
-                    maxExtents[0],
-                    maxExtents[1]
-                ]
+                extent: extentBuenosAires
             }),
             controls: [new FullScreenControl()]
         });
 
         this.map.on('pointermove', (e) => this.alMoverMouse(e))
+        this.map.on('click', (e) => this.alHacerClick(e))
     }
 
     /**
@@ -96,6 +97,45 @@ export class Mapa {
         })
     }
 
+    alHacerClick(evento: MapBrowserEvent) {
+        this.map.forEachFeatureAtPixel(evento.pixel, feature => {
+            if (feature.get('nombreSeccion')) {
+                this.alClickearSeccion(feature as Feature)
+            } else {
+                this.alClickearDistrito(feature as Feature)
+            }
+        })
+    }
+
+    private alClickearSeccion(seccion: Feature) {
+        // Enfocar la seccion clickeada
+        this.enfocarFeature(seccion)
+        const seccionId: number = seccion.get('id');
+
+        this.secciones.setVisible(false)
+
+        // Mostrar (solo?) los distritos de la seccion
+        const idDistritos: number[] = DistritosPorIdSeccion[seccionId]
+        const distritosQueEnfocar = this.todosLosDistritos
+            .getSource()
+            .getFeatures()
+            .filter(feature => idDistritos.includes(feature.get('id')))
+
+        this.distritosEnfocados.getSource().clear()
+        this.distritosEnfocados.getSource().addFeatures(distritosQueEnfocar)
+        this.distritosEnfocados.setVisible(true)
+        
+        // ???
+    }
+
+    private enfocarFeature(feature: Feature) {
+        this.map.getView().fit(feature.getGeometry().getExtent())
+    }
+
+    private alClickearDistrito(distrito: Feature) {
+        console.log('Distrito')
+    }
+
     mostrarCalles() {
         this.openStreetMap.setVisible(true)
     }
@@ -105,18 +145,28 @@ export class Mapa {
     }
 
     mostrarDistritos() {
-        this.distritos.setVisible(true)
+        this.todosLosDistritos.setVisible(true)
+        this.enfocarBuenosAires()
     }
 
     ocultarDistritos() {
-        this.distritos.setVisible(false)
+        this.todosLosDistritos.setVisible(false)
+    }
+
+    ocultarDistritosEnfocados() {
+        this.distritosEnfocados.setVisible(false)
     }
 
     mostrarSecciones() {
         this.secciones.setVisible(true)
+        this.enfocarBuenosAires()
     }
 
     ocultarSecciones() {
         this.secciones.setVisible(false)
+    }
+
+    enfocarBuenosAires() {
+        this.map.getView().fit(extentBuenosAires)
     }
 }
