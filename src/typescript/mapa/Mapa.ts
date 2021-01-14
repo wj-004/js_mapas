@@ -3,14 +3,14 @@ import { fromLonLat } from 'ol/proj';
 import OSM from 'ol/source/OSM'
 import FullScreenControl from 'ol/control/FullScreen'
 import TileLayer from 'ol/layer/Tile'
-import { getLayer } from './util/getLayer';
-import { seccionToNombre } from './util/seccionToNombre';
-import { distritoToNombre } from './util/distritoToNombre';
-import { Funcion } from './util/Funcion';
+import { getLayer } from '../util/getLayer';
+import { seccionToNombre } from '../util/seccionToNombre';
+import { distritoToNombre } from '../util/distritoToNombre';
+import { Funcion } from '../util/Funcion';
 import * as Estilos from './Estilos'
 import VectorLayer from 'ol/layer/Vector';
 import { FeatureLike } from 'ol/Feature';
-import { DistritosPorIdSeccion } from './data/DistritosPorSeccion'
+import { DistritosPorIdSeccion } from '../data/DistritosPorSeccion'
 import { Extent } from 'ol/extent';
 import VectorSource from 'ol/source/Vector';
 import { Nivel } from './Nivel'
@@ -228,7 +228,7 @@ export class Mapa {
                 this.callbackAlClickearCualquierDistrito(id)
             }
         } else {
-            throw new Error(`No hay seccion con id = ${id}`)
+            throw new Error(`No hay distrito con id = ${id}`)
         }
     }
 

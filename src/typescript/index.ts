@@ -1,5 +1,5 @@
-import { Mapa } from "./Mapa";
-import { Nivel } from "./Nivel";
+import { Mapa } from "./mapa/Mapa";
+import { Nivel } from "./mapa/Nivel";
 
 window.onload = inicializar
 
