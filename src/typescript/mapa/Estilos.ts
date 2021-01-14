@@ -24,4 +24,12 @@ export const RESALTADO = new Style({
         color: '#01A6E6',
         width: 4,
     })
-})
+});
+
+export const ENTORNO = new Style({
+    fill: new Fill({ color: '#015875' }),
+    stroke: new Stroke({
+        color: '#015875',
+        width: 2,
+    }),
+});

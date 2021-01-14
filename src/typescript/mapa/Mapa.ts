@@ -29,6 +29,7 @@ export class Mapa {
     private todosLosDistritos: VectorLayer;
     private secciones: VectorLayer;
     private distritosEnfocados: VectorLayer;
+    private entornoBsAs: VectorLayer;
 
     private elementoResaltado: FeatureLike = null;
     private elementoSeleccionado: FeatureLike = null;
@@ -47,29 +48,34 @@ export class Mapa {
             source: new OSM({ attributions: [] })
         })
 
-        // Cargar secciones y distritos
-        const [distritos, secciones] = await Promise.all([this.capaDistritos(), this.capaSecciones()])
+        // Cargar secciones, distritos y entorno
+        const [distritos, secciones, entornoBsAs] = await Promise.all([this.capaDistritos(), this.capaSecciones(), this.capaEntornoBsAs()])
         this.todosLosDistritos = distritos;
         this.secciones = secciones;
+        this.entornoBsAs = entornoBsAs;
         this.distritosEnfocados = new VectorLayer({ source: new VectorSource() });
 
         // Establecer visibilidad
         this.openStreetMap.setVisible(false)
         this.todosLosDistritos.setVisible(false)
         this.secciones.setVisible(true)
+        this.entornoBsAs.setVisible(true)
 
         // Establecer estilos 
-        const capas = [this.openStreetMap, this.todosLosDistritos, this.distritosEnfocados, this.secciones]
+        const capas = [this.openStreetMap, this.todosLosDistritos, this.distritosEnfocados, this.secciones, this.entornoBsAs]
         for (let capa of capas) {
-            if (capa !== this.openStreetMap) {
+            if (capa !== this.openStreetMap && capa !== this.entornoBsAs) {
                 (capa as VectorLayer).setStyle(Estilos.POR_DEFECTO)
+            }
+            if (capa == this.entornoBsAs) {
+                this.entornoBsAs.setStyle(Estilos.ENTORNO)
             }
         }
 
         // Mostrar mapa
         this.map = new Map({
             target: this.contenedor,
-            layers: [this.openStreetMap, this.todosLosDistritos, this.distritosEnfocados, this.secciones],
+            layers: [this.openStreetMap, this.todosLosDistritos, this.distritosEnfocados, this.secciones, this.entornoBsAs],
             view: new View({
                 center: fromLonLat([-60, -37.3]),
                 zoom: 0,
@@ -101,6 +107,13 @@ export class Mapa {
         return getLayer('../data/vector_data/bsas_provincia_secciones.geojson')
     }
 
+    /**
+     * Crea y configura la capa con el entorno de Buenos Aires
+     */
+    private capaEntornoBsAs(): Promise<VectorLayer> {
+        return getLayer('../data/vector_data/contorno_relleno.geojson')
+    }
+
     alMoverMouse(evento: MapBrowserEvent) {
         if (this.elementoResaltado !== null) {
             (this.elementoResaltado as Feature).setStyle(undefined)
@@ -108,18 +121,24 @@ export class Mapa {
         }
 
         this.map.forEachFeatureAtPixel(evento.pixel, feature => {
-            this.elementoResaltado = feature;
-            (this.elementoResaltado as Feature).setStyle(Estilos.RESALTADO)
-            return true;
+            //if agregado para evitar click sobre el entorno -- REEMPLAZAR cuando haya tiempo
+            if (feature.get('id') != '99999') {
+                this.elementoResaltado = feature;
+                (this.elementoResaltado as Feature).setStyle(Estilos.RESALTADO)
+                return true;
+            }
         })
     }
 
     alHacerClick(evento: MapBrowserEvent) {
         this.map.forEachFeatureAtPixel(evento.pixel, feature => {
-            if (feature.get('nombreSeccion')) {
-                this.alClickearSeccion(feature as Feature)
-            } else {
-                this.alClickearDistrito(feature as Feature)
+            //if agregado para evitar click sobre el entorno -- REEMPLAZAR cuando haya tiempo
+            if (feature.get('id') != '99999') {
+                if (feature.get('nombreSeccion')) {
+                    this.alClickearSeccion(feature as Feature)
+                } else {
+                    this.alClickearDistrito(feature as Feature)
+                }
             }
         })
     }
@@ -168,6 +187,10 @@ export class Mapa {
 
     ocultarSecciones() {
         this.secciones.setVisible(false)
+    }
+
+    mostrarEntornoBsAs() {
+        this.entornoBsAs.setVisible(true)
     }
 
     enfocarDistritos() {
