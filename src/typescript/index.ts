@@ -39,6 +39,12 @@ function inicializar() {
         }
     });
 
+    window.addEventListener('pintarDistritos', (evento: any) => {
+        for (let estilo of evento.detail.data) {
+            // mapa.pintarDistritoPorID(estilo.id, estilo.relleno, estilo.borde);
+        }
+    });
+
     window.addEventListener('show-map', (evento: any) => {
         const id = evento.detail.data.id as number;
         mapa.enfocarDistritoPorId(id)
