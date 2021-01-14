@@ -13,7 +13,6 @@ function inicializar() {
             if (!!featureEnfocadoMaybe) {
                 const { nivel, id } = JSON.parse(featureEnfocadoMaybe)
                 mapa.enfocarFeatureEnNivel(id, nivel)
-                // Emitir el evento de LW correspondiente
             }
         })
     
@@ -41,9 +40,12 @@ function inicializar() {
     });
 
     window.addEventListener('show-map', (evento: any) => {
-        console.log(evento)
         const id = evento.detail.data.id as number;
         mapa.enfocarDistritoPorId(id)
+    })
+
+    window.addEventListener('limpiarStorage', () => {
+        localStorage.clear()
     })
     
     const botonEnfocarDistritos: HTMLButtonElement = document.querySelector("#showDistritos")

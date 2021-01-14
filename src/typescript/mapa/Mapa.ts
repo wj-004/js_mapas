@@ -17,6 +17,8 @@ import { Nivel } from './Nivel'
 import Style from 'ol/style/Style';
 import Fill from 'ol/style/Fill';
 import Stroke from 'ol/style/Stroke';
+import { resaltar } from './estilo/resaltar';
+import { hexToColor } from './estilo/hexToColor';
 
 const extentBuenosAires = [ ...fromLonLat([-64, -42]), ...fromLonLat([-56, -32]) ] as Extent
 
@@ -31,13 +33,17 @@ export class Mapa {
     private distritosEnfocados: VectorLayer;
 
     private elementoResaltado: FeatureLike = null;
-    private elementoSeleccionado: FeatureLike = null;
 
     private _nivel: Nivel = Nivel.TODAS_LAS_SECCIONES;
     get nivel(): Nivel { return this._nivel }
 
     private callbackAlClickearCualquierDistrito: Funcion<number, void>;
     private callbackAlEnfocar: Funcion<{ nivel: Nivel, id: number }, void>;
+
+    private estilosPersonalizados: {
+        distritos: {[id: number]: Style},
+        secciones: {[id: number]: Style}
+    } = { distritos: {}, secciones: {} }
 
     constructor(private contenedor: HTMLElement) {}
     
@@ -103,13 +109,30 @@ export class Mapa {
 
     alMoverMouse(evento: MapBrowserEvent) {
         if (this.elementoResaltado !== null) {
-            (this.elementoResaltado as Feature).setStyle(undefined)
+            const estiloPersonalizado = this.getEstiloPersonalizado(this.elementoResaltado as Feature)
+            if (estiloPersonalizado) {
+                (this.elementoResaltado as Feature).setStyle(estiloPersonalizado)
+            } else {
+                (this.elementoResaltado as Feature).setStyle(undefined)
+            }
             this.elementoResaltado = null;
         }
 
         this.map.forEachFeatureAtPixel(evento.pixel, feature => {
             this.elementoResaltado = feature;
-            (this.elementoResaltado as Feature).setStyle(Estilos.RESALTADO)
+
+            let estilo: Style
+
+            const estiloPersonalizado = this.getEstiloPersonalizado(this.elementoResaltado as Feature)
+
+            if (estiloPersonalizado) {
+                estilo = this.calcularEstiloResaltado(estiloPersonalizado)
+            } else {
+                estilo = Estilos.RESALTADO
+            }
+
+            (this.elementoResaltado as Feature).setStyle(estilo)
+
             return true;
         })
     }
@@ -257,15 +280,16 @@ export class Mapa {
         const estilo = {}
 
         if (relleno) {
-            estilo['fill'] = new Fill({ color: relleno })
+            estilo['fill'] = new Fill({ color: hexToColor(relleno) })
         }
 
         if (borde) {
-            estilo['stroke'] = new Stroke({ color: borde })
+            estilo['stroke'] = new Stroke({ color: hexToColor(borde), width: 2 })
         }
 
         if (distrito) {
             distrito.setStyle(new Style(estilo))
+            this.estilosPersonalizados.distritos[id] = new Style(estilo)
         } else {
             throw new Error(`No hay distrito con id = ${id}`)
         }
@@ -350,13 +374,27 @@ export class Mapa {
         this.callbackAlClickearCualquierDistrito = callback
     }
 
-alEnfocar(callback: Funcion<{ nivel: Nivel, id: number }, void>) {
+    alEnfocar(callback: Funcion<{ nivel: Nivel, id: number }, void>) {
         this.callbackAlEnfocar = callback;
     }
 
     private llamarCallbackEnfocar(nivel: Nivel, id: number) {
         if (this.callbackAlEnfocar) {
             this.callbackAlEnfocar({nivel, id});
+        }
+    }
+
+    private calcularEstiloResaltado(estiloBase: Style): Style {
+        return resaltar(estiloBase)
+    }
+
+    private getEstiloPersonalizado(f: Feature): Style | undefined {
+        const estilosPersonalizados = f.get('nombreSeccion')
+                ? this.estilosPersonalizados.secciones
+                : this.estilosPersonalizados.distritos;
+        const id = f.get('id')
+        if (id in estilosPersonalizados) {
+            return estilosPersonalizados[id]
         }
     }
 }
