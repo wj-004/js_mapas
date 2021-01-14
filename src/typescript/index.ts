@@ -44,8 +44,9 @@ function inicializar() {
         mapa.enfocarDistritoPorId(id)
     })
 
-    window.addEventListener('limpiarStorage', () => {
+    window.addEventListener('limpiarStorage', (evento: any) => {
         localStorage.clear()
+        window.location.href = evento.detail.data;
     })
     
     const botonEnfocarDistritos: HTMLButtonElement = document.querySelector("#showDistritos")
