@@ -6,23 +6,39 @@ window.onload = inicializar
 function inicializar() {
     const mapa = new Mapa(document.querySelector("#map"))
 
-    mapa.iniciarlizar()
-    
-    // Revisar si hay un distrito/seccion enfocado
-    //  Si la hay, enfocar el mapa en el feature correspondiente
-    //  Emito evento LW con el ID del distrito/seccion
+    mapa
+        .iniciarlizar()
+        .then(() => {
+            const featureEnfocadoMaybe = localStorage.getItem('FeatureEnfocado')
+            if (!!featureEnfocadoMaybe) {
+                const { nivel, id } = JSON.parse(featureEnfocadoMaybe)
+                mapa.enfocarFeatureEnNivel(id, nivel)
+                // Emitir el evento de LW correspondiente
+            }
+        })
     
     window['mapa'] = mapa;
 
     mapa.alClickearCualquierDistrito(id => {
-        console.log('Verificando si hay livewire...')
         // @ts-ignore
         if (typeof livewire !== 'undefined') {
             // @ts-ignore
             livewire.emit('verDetalle', { id })
-            console.log('evento emitido!!')
         }
     })
+
+    mapa.alEnfocar(evento => {
+        switch (evento.nivel) {
+            case Nivel.TODAS_LAS_SECCIONES:
+            case Nivel.TODOS_LOS_DISTRITOS:
+                localStorage.removeItem('FeatureEnfocado')
+                break
+            case Nivel.UNA_SECCION:
+            case Nivel.UN_DISTRITO:
+                localStorage.setItem('FeatureEnfocado', JSON.stringify(evento))
+                break
+        }
+    });
 
     window.addEventListener('show-map', (evento: any) => {
         console.log(evento)
@@ -54,6 +70,7 @@ function inicializar() {
         mapa.ocultarDistritosEnfocados()
         mapa.mostrarSecciones()
         mapa.enfocarBuenosAires()
+        localStorage.removeItem('FeatureEnfocado')
     }
     
     const select: HTMLSelectElement = document.querySelector("#idSecciones")

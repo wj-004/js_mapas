@@ -37,6 +37,7 @@ export class Mapa {
     get nivel(): Nivel { return this._nivel }
 
     private callbackAlClickearCualquierDistrito: Funcion<number, void>;
+    private callbackAlEnfocar: Funcion<{ nivel: Nivel, id: number }, void>;
 
     constructor(private contenedor: HTMLElement) {}
     
@@ -171,6 +172,7 @@ export class Mapa {
 
     enfocarDistritos() {
         this._nivel = Nivel.TODOS_LOS_DISTRITOS
+        this.llamarCallbackEnfocar(this._nivel, null)
 
         this.ocultarSecciones()
         this.ocultarDistritosEnfocados()
@@ -185,6 +187,7 @@ export class Mapa {
 
     enfocarSecciones() {
         this._nivel = Nivel.TODAS_LAS_SECCIONES
+        this.llamarCallbackEnfocar(this._nivel, null)
 
         this.ocultarDistritos()
         this.ocultarDistritosEnfocados()
@@ -232,6 +235,19 @@ export class Mapa {
         }
     }
 
+    enfocarFeatureEnNivel(id: number, nivel: Nivel) {
+        switch (nivel) {
+            case Nivel.UNA_SECCION:
+                this.enfocarSeccionPorId(id)
+                break
+            case Nivel.UN_DISTRITO:
+                this.enfocarDistritoPorId(id)
+                break
+            default:
+                break;
+        }
+    }
+
     pintarDistritoPorID(id: number, relleno?: string, borde?: string) {
         const distrito = this.todosLosDistritos
             .getSource()
@@ -257,6 +273,7 @@ export class Mapa {
 
     private enfocarDistrito(distrito: Feature) {
         this._nivel = Nivel.UN_DISTRITO
+        this.llamarCallbackEnfocar(this._nivel, distrito.get('id'))
 
         this.enfocarFeature(distrito)
 
@@ -268,6 +285,7 @@ export class Mapa {
 
     private enfocarSeccion(seccion: Feature) {
         this._nivel = Nivel.UNA_SECCION
+        this.llamarCallbackEnfocar(this._nivel, seccion.get('id'))
 
         this.enfocarFeature(seccion)
         const seccionId: number = seccion.get('id');
@@ -330,5 +348,15 @@ export class Mapa {
 
     alClickearCualquierDistrito(callback: Funcion<number, void>) {
         this.callbackAlClickearCualquierDistrito = callback
+    }
+
+alEnfocar(callback: Funcion<{ nivel: Nivel, id: number }, void>) {
+        this.callbackAlEnfocar = callback;
+    }
+
+    private llamarCallbackEnfocar(nivel: Nivel, id: number) {
+        if (this.callbackAlEnfocar) {
+            this.callbackAlEnfocar({nivel, id});
+        }
     }
 }
