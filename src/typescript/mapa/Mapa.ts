@@ -11,6 +11,7 @@ import * as Estilos from './Estilos'
 import VectorLayer from 'ol/layer/Vector';
 import { FeatureLike } from 'ol/Feature';
 import { DistritosPorIdSeccion } from '../data/DistritosPorSeccion'
+import { LocalidadesPorIdDistrito } from "../data/LocalidadesPorDistrito";
 import { Extent } from 'ol/extent';
 import VectorSource from 'ol/source/Vector';
 import { Nivel } from './Nivel'
@@ -32,6 +33,8 @@ export class Mapa {
     private secciones: VectorLayer;
     private distritosEnfocados: VectorLayer;
     private entornoBsAs: VectorLayer;
+    private todasLaslocalidades: VectorLayer;
+    private localidadesEnfocadas: VectorLayer;
 
     private elementoResaltado: FeatureLike = null;
 
@@ -56,15 +59,18 @@ export class Mapa {
         })
 
         // Cargar secciones, distritos y entorno
-        const [distritos, secciones, entornoBsAs] = capas;
+        const [localidades, distritos, secciones, entornoBsAs] = capas;
         this.todosLosDistritos = distritos;
         this.secciones = secciones;
         this.entornoBsAs = entornoBsAs;
         this.distritosEnfocados = new VectorLayer({ source: new VectorSource() });
+        this.todasLaslocalidades = localidades;
+        this.localidadesEnfocadas = new VectorLayer({ source: new VectorSource() })
 
         // Establecer visibilidad
         this.openStreetMap.setVisible(false)
         this.todosLosDistritos.setVisible(false)
+        this.todasLaslocalidades.setVisible(false)
         this.secciones.setVisible(true)
         this.entornoBsAs.setVisible(true)
 
@@ -82,7 +88,9 @@ export class Mapa {
                 this.todosLosDistritos,
                 this.distritosEnfocados,
                 this.secciones,
-                this.entornoBsAs
+                this.entornoBsAs,
+                this.todasLaslocalidades, 
+                this.localidadesEnfocadas
             ],
             view: new View({
                 center: fromLonLat([-60, -37.3]),
@@ -164,6 +172,20 @@ export class Mapa {
 
     mostrarCalles() {
         this.openStreetMap.setVisible(true)
+        //sacar fondo (fill) del distrito seleccionado
+        //TODO hack, borrar y reemplazar despues!!!!
+        let distrito;
+        this.distritosEnfocados.getSource().getFeatures().forEach(f => {
+            distrito = f;
+        });
+        if (!!distrito) {
+            this.pintarDistritoPorID(
+                distrito.get('id')
+                , null
+                , '#028B9C'
+            )
+        }
+        
     }
 
     ocultarCalles() {
@@ -191,7 +213,23 @@ export class Mapa {
     }
 
     mostrarEntornoBsAs() {
-        this.entornoBsAs.setVisible(true)
+        this.entornoBsAs.setVisible(true) 
+    }
+
+    mostrarLocalidades() {
+        this.todasLaslocalidades.setVisible(true)
+    }
+
+    ocultarLocalidades() {
+        this.todasLaslocalidades.setVisible(false)
+    }
+
+    mostrarLocalidadesEnfocadas() {
+        this.localidadesEnfocadas.setVisible(true)
+    }
+
+    ocultarLocalidadesEnfocadas() {
+        this.localidadesEnfocadas.setVisible(false)
     }
 
     enfocarDistritos() {
@@ -200,6 +238,8 @@ export class Mapa {
 
         this.ocultarSecciones()
         this.ocultarDistritosEnfocados()
+        this.ocultarLocalidades()
+        this.ocultarLocalidadesEnfocadas()
         this.mostrarDistritos()
         this.enfocarBuenosAires()
 
@@ -215,6 +255,8 @@ export class Mapa {
 
         this.ocultarDistritos()
         this.ocultarDistritosEnfocados()
+        this.ocultarLocalidades()
+        this.ocultarLocalidadesEnfocadas()
         this.mostrarSecciones()
         this.enfocarBuenosAires()
 
@@ -306,6 +348,19 @@ export class Mapa {
         this.distritosEnfocados.getSource().clear()
         this.distritosEnfocados.getSource().addFeatures([distrito])
         this.distritosEnfocados.setVisible(true)
+
+
+        //Mostrar las localidades del distrito
+        /*const distritoId: number = distrito.get('id');
+        const idLocalidades: number[] = LocalidadesPorIdDistrito[distritoId]
+        const localidadesQueEnfocar = this.todasLaslocalidades
+            .getSource()
+            .getFeatures()
+            .filter(feature => idLocalidades.includes(feature.get('id')))
+        
+        this.localidadesEnfocadas.getSource().clear()
+        this.localidadesEnfocadas.getSource().addFeatures(localidadesQueEnfocar)
+        this.mostrarLocalidadesEnfocadas()*/
     }
 
     private enfocarSeccion(seccion: Feature) {
