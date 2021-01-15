@@ -10,7 +10,7 @@ export async function crearMapa(): Promise<Mapa> {
 
     return new Mapa(
         document.querySelector("#map"),
-        document.querySelector("#ubicacion"),
+        document.querySelector("#idSecciones"),
         capas,
     );
 }

@@ -3,7 +3,6 @@ import { fromLonLat } from 'ol/proj';
 import OSM from 'ol/source/OSM'
 import FullScreenControl from 'ol/control/FullScreen'
 import TileLayer from 'ol/layer/Tile'
-import { getLayer } from '../util/getLayer';
 import { seccionToNombre } from '../util/seccionToNombre';
 import { distritoToNombre } from '../util/distritoToNombre';
 import { Funcion } from '../util/Funcion';
@@ -23,6 +22,13 @@ import { EventoEnfocar } from './eventos/EventoEnfocar';
 import { aTitulo } from '../util/aTitulo';
 
 const extentBuenosAires = [ ...fromLonLat([-64, -42]), ...fromLonLat([-56, -32]) ] as Extent
+
+/**
+ * Valor de la opcion "Todos" en el selector de seccion/distrito.
+ * 
+ * Esto no deberia ir aqui, pero aca se queda. Por ahora.
+ */
+const OPCION_TODOS = String(-1);
 
 export class Mapa {
 
@@ -50,7 +56,7 @@ export class Mapa {
 
     constructor(
         private contenedor: HTMLElement,
-        private tagUbicacion: HTMLSpanElement,
+        private tagSelect: HTMLSelectElement,
         capas: VectorLayer[]
     ) {
         // Cargar mapa de OpenStreetMap
@@ -211,6 +217,8 @@ export class Mapa {
             this.todosLosDistritos.getSource().getFeatures(),
             distritoToNombre
         )
+
+        this.tagSelect.value = OPCION_TODOS
     }
 
     enfocarSecciones() {
@@ -226,6 +234,8 @@ export class Mapa {
             this.secciones.getSource().getFeatures(),
             seccionToNombre
         )
+
+        this.tagSelect.value = OPCION_TODOS;
     }
 
     enfocarBuenosAires() {
@@ -310,6 +320,8 @@ export class Mapa {
         this.distritosEnfocados.getSource().clear()
         this.distritosEnfocados.getSource().addFeatures([distrito])
         this.distritosEnfocados.setVisible(true)
+
+        this.tagSelect.value = String(distrito.get('id'))
     }
 
     private enfocarSeccion(seccion: Feature) {
@@ -337,6 +349,8 @@ export class Mapa {
             distritosQueEnfocar,
             distritoToNombre
         )
+
+        this.tagSelect.value = OPCION_TODOS;
     }
 
     private listarOpcionesEnSelect(features: Feature[], extraerNombre: Funcion<Feature, string>) {
@@ -345,14 +359,14 @@ export class Mapa {
             .sort((a, b) => a.nombre.localeCompare(b.nombre))
             .map(data => this.crearOptionTag(data.nombre, data.valor))
         
-        const select = document.querySelector('#idSecciones')
-        while (select.firstChild) {
-            select.removeChild(select.firstChild)
+        
+        while (this.tagSelect.firstChild) {
+            this.tagSelect.removeChild(this.tagSelect.firstChild)
         }
         for (let opcion of opciones) {
-            select.appendChild(opcion)
+            this.tagSelect.appendChild(opcion)
         }
-        select.prepend(this.crearOptionTag('Todo', -1))
+        this.tagSelect.prepend(this.crearOptionTag('Todo', -1))
     }
 
     private crearOptionTag(nombre: string, valor: number) {
@@ -367,8 +381,8 @@ export class Mapa {
             this.todosLosDistritos.getSource().getFeatures(),
             distritoToNombre
         )
-        const select: HTMLSelectElement = document.querySelector('#idSecciones')
-        select.value = String(id)
+        
+        this.tagSelect.value = String(id)
     }
 
     alClickerUnDistrito(id: number, callback) {
