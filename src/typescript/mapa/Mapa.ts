@@ -467,7 +467,7 @@ export class Mapa {
         return f.get('id') in estilos;
     }
 
-    //INICIO DE MANEJO DE ICONOS - MODIFICAR
+    //INICIO DE MANEJO DE ICONOS
     public deleteIconFeatures() {
         if (!!this.iconosEnMapa && !!this.iconosEnMapa.getSource()) {
             const iconos = this.iconosEnMapa.getSource();
@@ -490,6 +490,59 @@ export class Mapa {
         );
         return true;
     }
+
+    /* COMENTADA PARA REALIZAR CARGA MANUAL
+    public mostrarPinesDeOrganismosEnDistrito(distritoId, tipoEntidad, longitud, latitud) {
+        var distrito = null;
+        if (!!distritoId) {
+            distrito = this.distritosEnfocados.getSource().getFeatures().find(s => s.get('id') == distritoId)
+        }
+
+        var iconoPath = "../../../" + getPinPath('ORGANISMOS', tipoEntidad);
+
+        this.iconosEnMapa.getSource().addFeature(
+            this.crearIconFeature(tipoEntidad, iconoPath, [longitud, latitud])
+        );
+        return true;
+    }*/
+
+    //INICIO CARGA MANUAL - BORRAR LUEGO
+    public mostrarPinesDeOrganismosEnDistrito(nombre, entidad, lonLatAtArray) {
+        if (typeof entidad !== 'string') {
+            console.debug('addIconToFeature: tipo es distinto de string')
+        }
+
+        if (entidad == 'PENAL') {
+            entidad = 'AFIP';
+        }
+        if (entidad == 'CIVIL Y COMERCIAL') {
+            entidad = 'ANSES';
+        }
+        if (entidad == 'FAMILIA') {
+            entidad = 'ARBA';
+        }
+        if (entidad == 'CONTENCIOSO ADMINISTRATIVO') {
+            entidad = 'BANCO NACION';
+        }
+        if (entidad == 'LABORAL') {
+            entidad = 'BANCO PROVINCIA';
+        }
+        if (entidad == 'PAZ') {
+            entidad = 'CORREO ARGENTINO';
+        }
+        if (entidad == 'TODOS') {
+            entidad = 'PAMI';
+        }
+
+
+        var iconoPath = "../../../" + getPinPath('ORGANISMOS', entidad);
+
+        this.iconosEnMapa.getSource().addFeature(
+            this.crearIconFeature(nombre, iconoPath, lonLatAtArray)
+        );
+        return true;
+    }
+    //FIN CARGA MANUAL - BORRAR LUEGO
     
     private crearIconFeature(entityName, Iconopath, latLonAsArray) {
         var iconFeature = new Feature({

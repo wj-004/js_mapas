@@ -35,6 +35,40 @@ export function getPinPath(tipo: string, entidad: string): string {
                 break;
         }
     }
+    if (tipo == 'ORGANISMOS') {
+        switch (entidad.toUpperCase()) {
+            case 'AFIP':
+                fullPath = 'img/pines/organismos/PIN-08.png'    //GRIS OSCURO
+                break;
+
+            case 'ANSES':
+                fullPath = 'img/pines/organismos/PIN-02.png'    //CELESTE
+                break;
+
+            case 'ARBA':
+                fullPath = 'img/pines/organismos/PIN-09.png'    //CELESTE MAS CLARO
+                break;
+
+            case 'BANCO NACION':
+                fullPath = 'img/pines/organismos/PIN-04.png'    //AZUL
+                break;
+
+            case 'BANCO PROVINCIA':
+                fullPath = 'img/pines/organismos/PIN-05.png'    //VERDE
+                break;
+
+            case 'CORREO ARGENTINO':
+                fullPath = 'img/pines/organismos/PIN-06.png'    //AMARILLO
+                break;
+
+            case 'PAMI':
+                fullPath = 'img/pines/organismos/PIN-10.png'    //AZUL OSCURO
+                break;
+
+            default:
+                break;
+        }
+    }
 
     return fullPath;
 }
