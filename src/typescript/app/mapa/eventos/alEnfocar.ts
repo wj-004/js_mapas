@@ -5,6 +5,7 @@ import { aTitulo } from "../../../util/aTitulo"
 export function alEnfocar(evento: EventoEnfocar) {
     guardarOremoverZonaEnfocada(evento)
     establecerUbicacion(evento)
+    mostrarUocultarSwitchDeCalles(evento)
 }
 
 function guardarOremoverZonaEnfocada(evento: EventoEnfocar) {
@@ -29,5 +30,14 @@ function establecerUbicacion(evento: EventoEnfocar) {
 
     if (!!evento.nombre) {
         tagUbicacion.appendChild(document.createTextNode("- " + aTitulo(evento.nombre)))
+    }
+}
+
+function mostrarUocultarSwitchDeCalles(evento: EventoEnfocar) {
+    const toggle = document.querySelector("#showMapStreetsLabel") as HTMLLabelElement
+    if (evento.nivel === Nivel.UN_DISTRITO) {
+        toggle.classList.remove('d-none')
+    } else {
+        toggle.classList.add('d-none')
     }
 }

@@ -46,6 +46,8 @@ export class Mapa {
     private entornoBsAs: VectorLayer;
     private iconosEnMapa: VectorLayer;
 
+    private distritoEnfocado: Feature;
+
     private elementoResaltado: FeatureLike = null;
 
     private _nivel: Nivel = Nivel.TODAS_LAS_SECCIONES;
@@ -174,7 +176,10 @@ export class Mapa {
                 if (seccionOdistrito.get('nombreSeccion')) {
                     this.alClickearSeccion(seccionOdistrito as Feature)
                 } else {
-                    this.alClickearDistrito(seccionOdistrito as Feature)
+                    // PARCHE: evitar clicks a otros distritos cuando ya hay uno enfocado
+                    if (this.nivel !== Nivel.UN_DISTRITO) {
+                        this.alClickearDistrito(seccionOdistrito as Feature)
+                    }
                 }
             }
         })
@@ -204,17 +209,32 @@ export class Mapa {
     mostrarCalles() {
         this.openStreetMap.setVisible(true)
 
-        const distritoEnfocado = this.distritosEnfocados.getSource().getFeatures()[0]
-
         const elResto = this.todosLosDistritos.getSource()
             .getFeatures()
-            .filter(f => f.get('id') !== distritoEnfocado.get('id'))
+            .filter(f => f.get('id') !== this.distritoEnfocado.get('id'))
         
         this.distritosEnfocados.getSource().clear()
         this.distritosEnfocados.getSource().addFeatures(elResto)
+
+        this.map.getView().fit(this.distritoEnfocado.getGeometry().getExtent())
     }
 
     ocultarCalles() {
+        this.openStreetMap.setVisible(false)
+        
+        this.distritosEnfocados.getSource().clear()
+        this.distritosEnfocados.getSource().addFeature(this.distritoEnfocado)
+
+        this.map.getView().fit(this.distritoEnfocado.getGeometry().getExtent())
+    }
+
+    /**
+     * PARCHE: Esto solo pone a open street map en visible = false.
+     * 
+     * Es un workaround porque no se puede usar el metodo ocultarCalles, ya que el mismo ahora
+     * hace MAS que solo ocultarlas...
+     */
+    soloOcultarCapaOpenStreetMap() {
         this.openStreetMap.setVisible(false)
     }
 
@@ -254,6 +274,7 @@ export class Mapa {
         this._nivel = Nivel.TODOS_LOS_DISTRITOS
         this.llamarCallbackEnfocar(this._nivel, null)
 
+        this.openStreetMap.setVisible(false)
         this.ocultarSecciones()
         this.ocultarDistritosEnfocados()
         this.mostrarDistritos()
@@ -273,6 +294,7 @@ export class Mapa {
         this._nivel = Nivel.TODAS_LAS_SECCIONES
         this.llamarCallbackEnfocar(this._nivel, null)
 
+        this.openStreetMap.setVisible(false)
         this.ocultarDistritos()
         this.ocultarDistritosEnfocados()
         this.mostrarSecciones()
@@ -366,6 +388,7 @@ export class Mapa {
 
         this.enfocarFeature(distrito)
 
+        this.distritoEnfocado = distrito
         this.ocultarSecciones()
         this.distritosEnfocados.getSource().clear()
         this.distritosEnfocados.getSource().addFeatures([distrito])

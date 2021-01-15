@@ -4,21 +4,23 @@ import { clickSelect } from "./eventos/clickSelect"
 import { clickVisualizarCalles } from "./eventos/clickVisualizarCalles"
 
 export function configurarElementosDeInterfaz(mapa: Mapa) {
+    const showMapStreets: HTMLInputElement = document.querySelector("#showMapStreets")
+    showMapStreets.onchange = clickVisualizarCalles(showMapStreets, mapa)
+
     const botonEnfocarDistritos: HTMLButtonElement = document.querySelector("#showDistritos")
     botonEnfocarDistritos.onclick = () => {
         mapa.enfocarDistritos()
+        showMapStreets.checked = false
     }
     
     const botonEnfocarSecciones: HTMLButtonElement = document.querySelector("#showSecciones")
     botonEnfocarSecciones.onclick = () => {
         mapa.enfocarSecciones()
+        showMapStreets.checked = false
     }
     
-    const showMapStreets: HTMLInputElement = document.querySelector("#showMapStreets")
-    showMapStreets.onchange = clickVisualizarCalles(showMapStreets, mapa)
-    
     const initialShow: HTMLButtonElement = document.querySelector("#initialShow")
-    initialShow.onclick = clickBotonRestaurar(initialShow, mapa)
+    initialShow.onclick = clickBotonRestaurar(initialShow, mapa, showMapStreets)
     
     const select: HTMLSelectElement = document.querySelector("#idSecciones")
     select.onchange = clickSelect(select, mapa)
