@@ -172,8 +172,20 @@ export class Mapa {
         }
     }
 
+    /**
+     * Muestra las calles del distrito enfocado unicamente
+     */
     mostrarCalles() {
         this.openStreetMap.setVisible(true)
+
+        const distritoEnfocado = this.distritosEnfocados.getSource().getFeatures()[0]
+
+        const elResto = this.todosLosDistritos.getSource()
+            .getFeatures()
+            .filter(f => f.get('id') !== distritoEnfocado.get('id'))
+        
+        this.distritosEnfocados.getSource().clear()
+        this.distritosEnfocados.getSource().addFeatures(elResto)
     }
 
     ocultarCalles() {
