@@ -1,4 +1,4 @@
-import { Feature, Map, MapBrowserEvent, View } from 'ol'
+import { Feature, Map, MapBrowserEvent, View, Overlay } from 'ol'
 import { fromLonLat } from 'ol/proj';
 import OSM from 'ol/source/OSM'
 import FullScreenControl from 'ol/control/FullScreen'
@@ -14,11 +14,13 @@ import { DistritosPorIdSeccion } from '../data/DistritosPorSeccion'
 import { Extent } from 'ol/extent';
 import VectorSource from 'ol/source/Vector';
 import { Nivel } from './Nivel'
-import Style from 'ol/style/Style';
+import { Style, Icon } from 'ol/style';
 import Fill from 'ol/style/Fill';
 import Stroke from 'ol/style/Stroke';
 import { resaltar } from './estilo/resaltar';
 import { hexToColor } from './estilo/hexToColor';
+import Point from 'ol/geom/Point';
+import { getPinPath } from '../util/getPinPath';
 
 const extentBuenosAires = [ ...fromLonLat([-64, -42]), ...fromLonLat([-56, -32]) ] as Extent
 
@@ -32,6 +34,7 @@ export class Mapa {
     private secciones: VectorLayer;
     private distritosEnfocados: VectorLayer;
     private entornoBsAs: VectorLayer;
+    private iconosEnMapa: VectorLayer;
 
     private elementoResaltado: FeatureLike = null;
 
@@ -61,12 +64,14 @@ export class Mapa {
         this.secciones = secciones;
         this.entornoBsAs = entornoBsAs;
         this.distritosEnfocados = new VectorLayer({ source: new VectorSource() });
+        this.iconosEnMapa = new VectorLayer({ source: new VectorSource() });
 
         // Establecer visibilidad
         this.openStreetMap.setVisible(false)
         this.todosLosDistritos.setVisible(false)
         this.secciones.setVisible(true)
         this.entornoBsAs.setVisible(true)
+        this.iconosEnMapa.setVisible(true)
 
         // Establecer estilos
         this.todosLosDistritos.setStyle(Estilos.POR_DEFECTO)
@@ -82,7 +87,8 @@ export class Mapa {
                 this.todosLosDistritos,
                 this.distritosEnfocados,
                 this.secciones,
-                this.entornoBsAs
+                this.entornoBsAs,
+                this.iconosEnMapa
             ],
             view: new View({
                 center: fromLonLat([-60, -37.3]),
@@ -118,7 +124,8 @@ export class Mapa {
         }
 
         this.map.forEachFeatureAtPixel(evento.pixel, feature => {
-            if (feature.get('id') != 99999) {
+            //if agregado para evitar click sobre el entorno -- REEMPLAZAR cuando haya tiempo
+            if (feature.get('id') != '99999' && feature.getGeometry().getType() != 'Point') {
                 this.elementoResaltado = feature;
 
                 const estilo: Style = this.tieneEstiloPersonalizado(this.elementoResaltado as Feature)
@@ -192,6 +199,14 @@ export class Mapa {
 
     mostrarEntornoBsAs() {
         this.entornoBsAs.setVisible(true)
+    }
+
+    mostrarIconosEnMapa() {
+        this.iconosEnMapa.setVisible(true)
+    }
+
+    ocultarIconosEnMapa() {
+        this.iconosEnMapa.setVisible(false)
     }
 
     enfocarDistritos() {
@@ -405,5 +420,49 @@ export class Mapa {
                 : this.estilosPersonalizados.distritos;
         
         return f.get('id') in estilos;
+    }
+
+    //INICIO DE MANEJO DE ICONOS - MODIFICAR
+    public deleteIconFeatures() {
+        if (!!this.iconosEnMapa && !!this.iconosEnMapa.getSource()) {
+            const iconos = this.iconosEnMapa.getSource();
+            iconos.getFeatures().forEach(function (feature) {
+                if (feature.getGeometry().getType() === 'Point') {
+                    iconos.removeFeature(feature);
+                }
+            });
+        }
+    }
+
+    public mostrarPinesEntidadesJudiciales(nombre, entidad, lonLatAtArray) {
+        if (typeof entidad !== 'string') {
+            console.debug('addIconToFeature: tipo es distinto de string')
+        }
+        var iconoPath = "../../../" + getPinPath('TRIBUNALES', entidad);
+
+        this.iconosEnMapa.getSource().addFeature(
+            this.crearIconFeature(nombre, iconoPath, lonLatAtArray)
+        );
+        return true;
+    }
+    
+    private crearIconFeature(entityName, Iconopath, latLonAsArray) {
+        var iconFeature = new Feature({
+            geometry: new Point(fromLonLat(latLonAsArray)),
+            name: entityName ?? ''
+        });
+    
+        try {
+            iconFeature.setStyle(new Style({
+                image: new Icon({
+                    anchor: [0.5, 1],
+                    src: Iconopath,
+                    scale: 0.7
+                })
+            }));
+        } catch (e) {
+            console.error("Error crearIconFeature function: " + e);
+        }
+        return iconFeature;
     }
 }
