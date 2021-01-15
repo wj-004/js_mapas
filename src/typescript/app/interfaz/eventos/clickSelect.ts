@@ -13,7 +13,6 @@ export function clickSelect(select: HTMLSelectElement, mapa: Mapa) {
                     mapa.enfocarDistritos()
                     break
                 case Nivel.UNA_SECCION:
-                    break
                 case Nivel.UN_DISTRITO:
                     break
             }
@@ -26,6 +25,7 @@ export function clickSelect(select: HTMLSelectElement, mapa: Mapa) {
                     mapa.enfocarDistritoPorId(id)
                     break
                 case Nivel.UNA_SECCION:
+                case Nivel.UN_DISTRITO:
                     mapa.enfocarDistritoPorId(id)
                     break
             }

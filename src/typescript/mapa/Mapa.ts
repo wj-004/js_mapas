@@ -50,7 +50,7 @@ export class Mapa {
 
     private elementoResaltado: FeatureLike = null;
 
-    private _nivel: Nivel = Nivel.TODAS_LAS_SECCIONES;
+    private _nivel: Nivel = Nivel.TODOS_LOS_DISTRITOS;
     get nivel(): Nivel { return this._nivel }
 
     private callbackAlClickearCualquierDistrito: Funcion<number, void>;
@@ -81,8 +81,8 @@ export class Mapa {
 
         // Establecer visibilidad
         this.openStreetMap.setVisible(false)
-        this.todosLosDistritos.setVisible(false)
-        this.secciones.setVisible(true)
+        this.todosLosDistritos.setVisible(true)
+        this.secciones.setVisible(false)
         this.entornoBsAs.setVisible(true)
         this.iconosEnMapa.setVisible(true)
 
@@ -133,9 +133,11 @@ export class Mapa {
         this.map.on('click', (e) => this.alHacerClick(e))
 
         this.listarOpcionesEnSelect(
-            this.secciones.getSource().getFeatures(),
-            seccionToNombre
+            this.todosLosDistritos.getSource().getFeatures(),
+            distritoToNombre
         )
+        
+        this.tagSelect.value = OPCION_TODOS
     }
 
     alMoverMouse(evento: MapBrowserEvent) {
@@ -312,6 +314,10 @@ export class Mapa {
         this.map.getView().fit(extentBuenosAires)
         this.establecerInteraccion(Interacciones.MouseWheelZoom, false)
         this.establecerInteraccion(Interacciones.DragPan, false)
+    }
+
+    ponerNivelEnTodosLosDistritos() {
+        this._nivel = Nivel.TODOS_LOS_DISTRITOS
     }
 
     enfocarSeccionPorId(id: number) {
