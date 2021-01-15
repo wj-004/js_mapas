@@ -19,6 +19,8 @@ import Fill from 'ol/style/Fill';
 import Stroke from 'ol/style/Stroke';
 import { resaltar } from './estilo/resaltar';
 import { hexToColor } from './estilo/hexToColor';
+import { EventoEnfocar } from './eventos/EventoEnfocar';
+import { aTitulo } from '../util/aTitulo';
 
 const extentBuenosAires = [ ...fromLonLat([-64, -42]), ...fromLonLat([-56, -32]) ] as Extent
 
@@ -39,7 +41,7 @@ export class Mapa {
     get nivel(): Nivel { return this._nivel }
 
     private callbackAlClickearCualquierDistrito: Funcion<number, void>;
-    private callbackAlEnfocar: Funcion<{ nivel: Nivel, id: number }, void>;
+    private callbackAlEnfocar: Funcion<EventoEnfocar, void>;
 
     private estilosPersonalizados: {
         distritos: {[id: number]: Style},
@@ -48,6 +50,7 @@ export class Mapa {
 
     constructor(
         private contenedor: HTMLElement,
+        private tagUbicacion: HTMLSpanElement,
         capas: VectorLayer[]
     ) {
         // Cargar mapa de OpenStreetMap
@@ -132,13 +135,14 @@ export class Mapa {
     }
 
     alHacerClick(evento: MapBrowserEvent) {
-        this.map.forEachFeatureAtPixel(evento.pixel, feature => {
-            //if agregado para evitar click sobre el entorno -- REEMPLAZAR cuando haya tiempo
-            if (feature.get('id') != 99999) {
-                if (feature.get('nombreSeccion')) {
-                    this.alClickearSeccion(feature as Feature)
+        this.map.forEachFeatureAtPixel(evento.pixel, seccionOdistrito => {
+            // If agregado para ignorar clicks sobre el entorno -- REEMPLAZAR cuando haya tiempo
+            if (seccionOdistrito.get('id') != 99999) {
+                // Detectar si se hizo click en una seccion o en un distrito
+                if (seccionOdistrito.get('nombreSeccion')) {
+                    this.alClickearSeccion(seccionOdistrito as Feature)
                 } else {
-                    this.alClickearDistrito(feature as Feature)
+                    this.alClickearDistrito(seccionOdistrito as Feature)
                 }
             }
         })
@@ -298,7 +302,7 @@ export class Mapa {
 
     private enfocarDistrito(distrito: Feature) {
         this._nivel = Nivel.UN_DISTRITO
-        this.llamarCallbackEnfocar(this._nivel, distrito.get('id'))
+        this.llamarCallbackEnfocar(this._nivel, distrito)
 
         this.enfocarFeature(distrito)
 
@@ -310,7 +314,7 @@ export class Mapa {
 
     private enfocarSeccion(seccion: Feature) {
         this._nivel = Nivel.UNA_SECCION
-        this.llamarCallbackEnfocar(this._nivel, seccion.get('id'))
+        this.llamarCallbackEnfocar(this._nivel, seccion)
 
         this.enfocarFeature(seccion)
         const seccionId: number = seccion.get('id');
@@ -354,7 +358,7 @@ export class Mapa {
     private crearOptionTag(nombre: string, valor: number) {
         const opt = document.createElement('option')
         opt.value = String(valor),
-        opt.appendChild(document.createTextNode(nombre))
+        opt.appendChild(document.createTextNode(aTitulo(nombre)))
         return opt
     }
 
@@ -375,13 +379,13 @@ export class Mapa {
         this.callbackAlClickearCualquierDistrito = callback
     }
 
-    alEnfocar(callback: Funcion<{ nivel: Nivel, id: number }, void>) {
+    alEnfocar(callback: Funcion<EventoEnfocar, void>) {
         this.callbackAlEnfocar = callback;
     }
 
-    private llamarCallbackEnfocar(nivel: Nivel, id: number) {
+    private llamarCallbackEnfocar(nivel: Nivel, feature: Feature) {
         if (this.callbackAlEnfocar) {
-            this.callbackAlEnfocar({nivel, id});
+            this.callbackAlEnfocar(new EventoEnfocar(nivel, feature));
         }
     }
 

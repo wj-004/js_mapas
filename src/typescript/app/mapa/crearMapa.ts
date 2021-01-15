@@ -6,7 +6,11 @@ export async function crearMapa(): Promise<Mapa> {
         '../data/vector_data/bsas_provincia_distritos.geojson',
         '../data/vector_data/bsas_provincia_secciones.geojson',
         '../data/vector_data/contorno_relleno.geojson'
-    ])
+    ]);
 
-    return new Mapa(document.querySelector("#map"), capas);
+    return new Mapa(
+        document.querySelector("#map"),
+        document.querySelector("#ubicacion"),
+        capas,
+    );
 }
