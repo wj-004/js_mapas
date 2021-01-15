@@ -14,3 +14,7 @@ export function getLayer(geoJsonUrl: string): Promise<VectorLayer> {
             })
         )
 }
+
+export function getLayers(urls: string[]): Promise<VectorLayer[]> {
+    return Promise.all(urls.map(getLayer))
+}

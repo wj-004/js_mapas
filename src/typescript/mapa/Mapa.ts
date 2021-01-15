@@ -46,16 +46,17 @@ export class Mapa {
         secciones: {[id: number]: Style}
     } = { distritos: {}, secciones: {} }
 
-    constructor(private contenedor: HTMLElement) {}
-    
-    async iniciarlizar() {
+    constructor(
+        private contenedor: HTMLElement,
+        capas: VectorLayer[]
+    ) {
         // Cargar mapa de OpenStreetMap
         this.openStreetMap = new TileLayer({
             source: new OSM({ attributions: [] })
         })
 
         // Cargar secciones, distritos y entorno
-        const [distritos, secciones, entornoBsAs] = await Promise.all([this.capaDistritos(), this.capaSecciones(), this.capaEntornoBsAs()])
+        const [distritos, secciones, entornoBsAs] = capas;
         this.todosLosDistritos = distritos;
         this.secciones = secciones;
         this.entornoBsAs = entornoBsAs;
@@ -67,21 +68,22 @@ export class Mapa {
         this.secciones.setVisible(true)
         this.entornoBsAs.setVisible(true)
 
-        // Establecer estilos 
-        const capas = [this.openStreetMap, this.todosLosDistritos, this.distritosEnfocados, this.secciones, this.entornoBsAs]
-        for (let capa of capas) {
-            if (capa !== this.openStreetMap && capa !== this.entornoBsAs) {
-                (capa as VectorLayer).setStyle(Estilos.POR_DEFECTO)
-            }
-            if (capa == this.entornoBsAs) {
-                this.entornoBsAs.setStyle(Estilos.ENTORNO)
-            }
-        }
+        // Establecer estilos
+        this.todosLosDistritos.setStyle(Estilos.POR_DEFECTO)
+        this.secciones.setStyle(Estilos.POR_DEFECTO)
+        this.distritosEnfocados.setStyle(Estilos.POR_DEFECTO)
+        this.entornoBsAs.setStyle(Estilos.ENTORNO)
 
         // Mostrar mapa
         this.map = new Map({
             target: this.contenedor,
-            layers: [this.openStreetMap, this.todosLosDistritos, this.distritosEnfocados, this.secciones, this.entornoBsAs],
+            layers: [
+                this.openStreetMap,
+                this.todosLosDistritos,
+                this.distritosEnfocados,
+                this.secciones,
+                this.entornoBsAs
+            ],
             view: new View({
                 center: fromLonLat([-60, -37.3]),
                 zoom: 0,
@@ -90,6 +92,7 @@ export class Mapa {
             controls: [new FullScreenControl()]
         });
 
+        // Establecer listeners
         this.map.on('pointermove', (e) => this.alMoverMouse(e))
         this.map.on('click', (e) => this.alHacerClick(e))
 
@@ -99,28 +102,11 @@ export class Mapa {
         )
     }
 
-    /**
-     * Crea y configura la capa de distritos
-     */
-    private capaDistritos(): Promise<VectorLayer> {
-        return getLayer('../data/vector_data/bsas_provincia_distritos.geojson')
-    }
-
-    /**
-     * Crea y configura la capa de secciones
-     */
-    private capaSecciones(): Promise<VectorLayer> {
-        return getLayer('../data/vector_data/bsas_provincia_secciones.geojson')
-    }
-
-    /**
-     * Crea y configura la capa con el entorno de Buenos Aires
-     */
-    private capaEntornoBsAs(): Promise<VectorLayer> {
-        return getLayer('../data/vector_data/contorno_relleno.geojson')
-    }
-
     alMoverMouse(evento: MapBrowserEvent) {
+        this.resaltarZonaBajoMouse(evento)
+    }
+
+    private resaltarZonaBajoMouse(evento: MapBrowserEvent) {
         if (this.elementoResaltado !== null) {
             const estiloPersonalizado = this.getEstiloPersonalizado(this.elementoResaltado as Feature)
             if (estiloPersonalizado) {
@@ -135,15 +121,9 @@ export class Mapa {
             if (feature.get('id') != 99999) {
                 this.elementoResaltado = feature;
 
-                let estilo: Style
-    
-                const estiloPersonalizado = this.getEstiloPersonalizado(this.elementoResaltado as Feature)
-    
-                if (estiloPersonalizado) {
-                    estilo = this.calcularEstiloResaltado(estiloPersonalizado)
-                } else {
-                    estilo = Estilos.RESALTADO
-                }
+                const estilo: Style = this.tieneEstiloPersonalizado(this.elementoResaltado as Feature)
+                    ? this.getEstiloPersonalizado(this.elementoResaltado as Feature)
+                    : Estilos.RESALTADO;
     
                 (this.elementoResaltado as Feature).setStyle(estilo)
                 return true;
@@ -417,5 +397,13 @@ export class Mapa {
         if (id in estilosPersonalizados) {
             return estilosPersonalizados[id]
         }
+    }
+
+    private tieneEstiloPersonalizado(f: Feature): boolean {
+        const estilos = f.get('nombreSeccion')
+                ? this.estilosPersonalizados.secciones
+                : this.estilosPersonalizados.distritos;
+        
+        return f.get('id') in estilos;
     }
 }
