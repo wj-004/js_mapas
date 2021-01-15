@@ -125,7 +125,7 @@ export class Mapa {
                 this.elementoResaltado = feature;
 
                 const estilo: Style = this.tieneEstiloPersonalizado(this.elementoResaltado as Feature)
-                    ? this.getEstiloPersonalizado(this.elementoResaltado as Feature)
+                    ? this.calcularEstiloResaltado(this.getEstiloPersonalizado(this.elementoResaltado as Feature))
                     : Estilos.RESALTADO;
     
                 (this.elementoResaltado as Feature).setStyle(estilo)
