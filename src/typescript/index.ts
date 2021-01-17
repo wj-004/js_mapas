@@ -3,6 +3,7 @@ import { configurarListenersDelMapa } from "./app/mapa/configurarListenersDelMap
 import { crearMapa } from "./app/mapa/crearMapa";
 import { enfocarZonaGuardada } from "./app/mapa/enfocarFeatureGuardado";
 import { configurarListenersDelNavegador } from "./app/navegador/configurarListenersDelNavegador";
+import { livewireEmit } from "./util/livewireEmit";
 
 window.onload = inicializar
 
@@ -15,4 +16,6 @@ async function inicializar() {
     enfocarZonaGuardada(mapa)
 
     window['mapa'] = mapa;
+
+    livewireEmit('mapaListo');
 }

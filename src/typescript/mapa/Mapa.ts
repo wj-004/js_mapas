@@ -24,6 +24,7 @@ import Point from 'ol/geom/Point';
 import { getPinPath } from '../util/getPinPath';
 import * as Interacciones from 'ol/interaction';
 import * as Control from 'ol/control';
+import { oscurecer } from './estilo/oscurecer';
 
 const extentBuenosAires = [ ...fromLonLat([-64, -42]), ...fromLonLat([-56, -32]) ] as Extent
 
@@ -378,6 +379,8 @@ export class Mapa {
 
         if (borde) {
             estilo['stroke'] = new Stroke({ color: hexToColor(borde), width: 2 })
+        } else {
+            estilo['stroke'] = new Stroke({ color: oscurecer(hexToColor(borde)), width: 2 })
         }
 
         if (distrito) {
