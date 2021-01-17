@@ -379,8 +379,6 @@ export class Mapa {
 
         if (borde) {
             estilo['stroke'] = new Stroke({ color: hexToColor(borde), width: 2 })
-        } else {
-            estilo['stroke'] = new Stroke({ color: oscurecer(hexToColor(borde)), width: 2 })
         }
 
         if (distrito) {
@@ -388,6 +386,30 @@ export class Mapa {
             this.estilosPersonalizados.distritos[id] = new Style(estilo)
         } else {
             throw new Error(`No hay distrito con id = ${id}`)
+        }
+    }
+
+    pintarSeccionPorID(id: number, relleno?: string, borde?: string) {
+        const seccion = this.secciones
+            .getSource()
+            .getFeatures()
+            .find(d => d.get('id') === id)
+    
+        const estilo = {}
+
+        if (relleno) {
+            estilo['fill'] = new Fill({ color: hexToColor(relleno) })
+        }
+
+        if (borde) {
+            estilo['stroke'] = new Stroke({ color: hexToColor(borde), width: 2 })
+        }
+
+        if (seccion) {
+            seccion.setStyle(new Style(estilo))
+            this.estilosPersonalizados.distritos[id] = new Style(estilo)
+        } else {
+            throw new Error(`No hay seccion con id = ${id}`)
         }
     }
 
