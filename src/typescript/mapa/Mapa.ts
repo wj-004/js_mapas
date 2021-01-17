@@ -126,7 +126,6 @@ export class Mapa {
             })
         });
 
-        this.establecerInteraccion(Interacciones.MouseWheelZoom, false)
         this.establecerInteraccion(Interacciones.DragPan, false)
         
         // Establecer listeners
@@ -379,6 +378,10 @@ export class Mapa {
 
         if (borde) {
             estilo.setStroke(new Stroke({ color: hexToColor(borde), width: 2 }));
+        } else {
+            estilo.setStroke(new Stroke({
+                color: Estilos.POR_DEFECTO.getFill().getColor(), width: 2
+            }))
         }
 
         if (distrito && (!!relleno || !!borde)) {
@@ -403,6 +406,10 @@ export class Mapa {
 
         if (borde) {
             estilo.setStroke(new Stroke({ color: hexToColor(borde), width: 2 }))
+        } else {
+            estilo.setStroke(new Stroke({
+                color: Estilos.POR_DEFECTO.getFill().getColor(), width: 2
+            }))
         }
 
         if (seccion) {
