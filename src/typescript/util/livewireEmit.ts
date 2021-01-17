@@ -1,6 +1,6 @@
 export function livewireEmit(nombre: string, datos?: any) {
     // @ts-ignore
-    if (livewire) {
+    if (typeof livewire !== 'undefined') {
         if (datos) {
             // @ts-ignore
             livewire.emit(nombre, datos)

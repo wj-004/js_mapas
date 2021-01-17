@@ -371,19 +371,19 @@ export class Mapa {
             .getFeatures()
             .find(d => d.get('id') === id)
     
-        const estilo = {}
+        const estilo = Estilos.POR_DEFECTO.clone();
 
         if (relleno) {
-            estilo['fill'] = new Fill({ color: hexToColor(relleno) })
+            estilo.setFill(new Fill({ color: hexToColor(relleno) }))
         }
 
         if (borde) {
-            estilo['stroke'] = new Stroke({ color: hexToColor(borde), width: 2 })
+            estilo.setStroke(new Stroke({ color: hexToColor(borde), width: 2 }));
         }
 
-        if (distrito) {
-            distrito.setStyle(new Style(estilo))
-            this.estilosPersonalizados.distritos[id] = new Style(estilo)
+        if (distrito && (!!relleno || !!borde)) {
+            distrito.setStyle(estilo)
+            this.estilosPersonalizados.distritos[id] = estilo
         } else {
             throw new Error(`No hay distrito con id = ${id}`)
         }
@@ -395,19 +395,19 @@ export class Mapa {
             .getFeatures()
             .find(d => d.get('id') === id)
     
-        const estilo = {}
+        const estilo = Estilos.POR_DEFECTO.clone();
 
         if (relleno) {
-            estilo['fill'] = new Fill({ color: hexToColor(relleno) })
+            estilo.setFill(new Fill({ color: hexToColor(relleno) }))
         }
 
         if (borde) {
-            estilo['stroke'] = new Stroke({ color: hexToColor(borde), width: 2 })
+            estilo.setStroke(new Stroke({ color: hexToColor(borde), width: 2 }))
         }
 
         if (seccion) {
-            seccion.setStyle(new Style(estilo))
-            this.estilosPersonalizados.distritos[id] = new Style(estilo)
+            seccion.setStyle(estilo)
+            this.estilosPersonalizados.distritos[id] = estilo
         } else {
             throw new Error(`No hay seccion con id = ${id}`)
         }

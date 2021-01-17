@@ -17,15 +17,16 @@ export function resaltar(estilo: Style): Style {
 }
 
 /**
- * Aclara un color en 10% si su claridad (lightness) es menor 100%. Si no, lo deja igual.
+ * Incrementa la claridad de un color en 10%, como mucho (hasta un maximo de 100%).
+ * 
  * @param c 
  */
 function aclarar(c: Color): Color {
     const [r, g, b, a] = c
     let [h, s, l] = convert.rgb.hsl([r, g, b])
-    if (l + 10 < 100) {
-       l = l + 10
-    }
+    l = l + 10 < 100
+        ? l + 10
+        : 100;
     return [
         ...convert.hsl.rgb([h, s, l]),
         a
