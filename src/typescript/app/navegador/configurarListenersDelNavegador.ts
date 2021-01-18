@@ -7,6 +7,7 @@ import { pintarDistritosIntendents } from "../mapa/eventos/pintarDistritosIntend
 import { pintarSeccionesIntendentes } from "./eventos/pintarSeccionesIntendentes";
 import { pintarDepartamentoJudicial } from "./eventos/pintarDepartamentoJudicial";
 import { pintarDepartamentosJudiciales } from "./eventos/pintarDepartamentosJudiciales";
+import { bordearDistritos } from "./eventos/bordearDistritos";
 
 export function configurarListenersDelNavegador(mapa: Mapa) {
     window.addEventListener('pintarDistritos', pintarMapa);
@@ -18,6 +19,8 @@ export function configurarListenersDelNavegador(mapa: Mapa) {
     window.addEventListener('pintarDepartamentoJudicial', pintarDepartamentoJudicial(mapa));
 
     window.addEventListener('pintarDepartamentosJudiciales', pintarDepartamentosJudiciales(mapa));
+
+    window.addEventListener('bordearDistritos', bordearDistritos(mapa));
 
     window.addEventListener('show-map', showMapa(mapa))
 

@@ -364,7 +364,7 @@ export class Mapa {
         }
     }
 
-    pintarDistritoPorID(id: number, relleno?: string, borde?: string) {
+    pintarDistritoPorID(id: number, relleno?: string, borde?: string, bordeGrueso?: boolean) {
         const distrito = this.todosLosDistritos
             .getSource()
             .getFeatures()
@@ -376,11 +376,16 @@ export class Mapa {
             estilo.setFill(new Fill({ color: hexToColor(relleno) }))
         }
 
+        
+        const ancho = !!bordeGrueso
+            ? 4
+            : 2
+
         if (borde) {
-            estilo.setStroke(new Stroke({ color: hexToColor(borde), width: 2 }));
+            estilo.setStroke(new Stroke({ color: hexToColor(borde), width: ancho }));
         } else {
             estilo.setStroke(new Stroke({
-                color: Estilos.POR_DEFECTO.getFill().getColor(), width: 2
+                color: Estilos.POR_DEFECTO.getFill().getColor(), width: ancho
             }))
         }
 

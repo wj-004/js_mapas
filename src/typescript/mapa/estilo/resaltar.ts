@@ -11,7 +11,7 @@ export function resaltar(estilo: Style): Style {
     relleno.setColor(aclarar(relleno.getColor() as Color))
 
     const borde = estilo.getStroke().clone()
-    borde.setWidth(4)
+    borde.setWidth(borde.getWidth() + 2)
 
     return new Style({ fill: relleno, stroke: borde })
 }

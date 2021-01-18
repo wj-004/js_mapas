@@ -1,4 +1,6 @@
 import { configurarElementosDeInterfaz } from "./app/interfaz/configurarElementosDeInterfaz";
+import { mostrarMapa } from "./app/interfaz/mostrarMapa";
+import { quitarDialogoCarga } from "./app/interfaz/quitarDialogoCarga";
 import { configurarListenersDelMapa } from "./app/mapa/configurarListenersDelMapa";
 import { crearMapa } from "./app/mapa/crearMapa";
 import { enfocarZonaGuardada } from "./app/mapa/enfocarFeatureGuardado";
@@ -16,14 +18,8 @@ async function inicializar() {
         '../data/vector_data/contorno_relleno.geojson'
     ]);
 
-    // Quitar dialogo de carga
-    const dialogoCargaContainer = document.querySelector('.dialogo-carga--container')
-    dialogoCargaContainer.classList.add('d-none')
-    dialogoCargaContainer.classList.remove('d-flex')
-    
-    // Mostrar mapa y sus controles
-    document.querySelector('.mapa--container').classList.remove('d-none')
-    document.querySelector('.mapa--controles').classList.remove('d-none')
+    quitarDialogoCarga()
+    mostrarMapa()
 
     const mapa = crearMapa(capas)
     
