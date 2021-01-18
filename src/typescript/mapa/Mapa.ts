@@ -420,6 +420,16 @@ export class Mapa {
         }
     }
 
+    /**
+     * Restablece el estilo de todos los distritos al valor por defecto
+     */
+    restablecerEstiloDeDistritos() {
+        for (let distrito of this.todosLosDistritos.getSource().getFeatures()) {
+            distrito.setStyle(Estilos.POR_DEFECTO);
+        }
+        this.estilosPersonalizados = { ...this.estilosPersonalizados, distritos: {} };
+    }
+
     private enfocarDistrito(distrito: Feature) {
         this._nivel = Nivel.UN_DISTRITO
         this.llamarCallbackEnfocar(this._nivel, distrito)
