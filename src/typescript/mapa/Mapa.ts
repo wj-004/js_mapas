@@ -24,8 +24,10 @@ import Point from 'ol/geom/Point';
 import { getPinPath } from '../util/getPinPath';
 import * as Interacciones from 'ol/interaction';
 import * as Control from 'ol/control';
+import GeometryType from 'ol/geom/GeometryType';
+import { Coordinate } from 'ol/coordinate';
 
-const extentBuenosAires = [ ...fromLonLat([-64, -42]), ...fromLonLat([-56, -32]) ] as Extent
+const extentBuenosAires = [...fromLonLat([-64, -42]), ...fromLonLat([-56, -32])] as Extent
 
 /**
  * Valor de la opcion "Todos" en el selector de seccion/distrito.
@@ -43,6 +45,7 @@ export class Mapa {
     private todosLosDistritos: VectorLayer;
     private secciones: VectorLayer;
     private distritosEnfocados: VectorLayer;
+    private iconosEnfocados: VectorLayer;
     private entornoBsAs: VectorLayer;
     private iconosEnMapa: VectorLayer;
 
@@ -57,8 +60,8 @@ export class Mapa {
     private callbackAlEnfocar: Funcion<EventoEnfocar, void>;
 
     private estilosPersonalizados: {
-        distritos: {[id: number]: Style},
-        secciones: {[id: number]: Style}
+        distritos: { [id: number]: Style },
+        secciones: { [id: number]: Style }
     } = { distritos: {}, secciones: {} }
 
     constructor(
@@ -77,6 +80,7 @@ export class Mapa {
         this.secciones = secciones;
         this.entornoBsAs = entornoBsAs;
         this.distritosEnfocados = new VectorLayer({ source: new VectorSource() });
+        this.iconosEnfocados = new VectorLayer({ source: new VectorSource() });
         this.iconosEnMapa = new VectorLayer({ source: new VectorSource() });
 
         // Establecer visibilidad
@@ -85,6 +89,7 @@ export class Mapa {
         this.secciones.setVisible(false)
         this.entornoBsAs.setVisible(true)
         this.iconosEnMapa.setVisible(true)
+        this.iconosEnfocados.setVisible(false);
 
         // Establecer estilos
         this.todosLosDistritos.setStyle(Estilos.POR_DEFECTO)
@@ -101,7 +106,8 @@ export class Mapa {
                 this.distritosEnfocados,
                 this.secciones,
                 this.entornoBsAs,
-                this.iconosEnMapa
+                this.iconosEnMapa,
+                this.iconosEnfocados
             ],
             view: new View({
                 center: fromLonLat([-60, -37.3]),
@@ -126,7 +132,7 @@ export class Mapa {
         });
 
         this.establecerInteraccion(Interacciones.DragPan, false)
-        
+
         // Establecer listeners
         this.map.on('pointermove', (e) => this.alMoverMouse(e))
         this.map.on('click', (e) => this.alHacerClick(e))
@@ -135,7 +141,7 @@ export class Mapa {
             this.todosLosDistritos.getSource().getFeatures(),
             distritoToNombre
         )
-        
+
         this.tagSelect.value = OPCION_TODOS
     }
 
@@ -162,7 +168,7 @@ export class Mapa {
                 const estilo: Style = this.tieneEstiloPersonalizado(this.elementoResaltado as Feature)
                     ? this.calcularEstiloResaltado(this.getEstiloPersonalizado(this.elementoResaltado as Feature))
                     : Estilos.RESALTADO;
-    
+
                 (this.elementoResaltado as Feature).setStyle(estilo)
                 return true;
             }
@@ -171,6 +177,7 @@ export class Mapa {
 
     alHacerClick(evento: MapBrowserEvent) {
         this.map.forEachFeatureAtPixel(evento.pixel, seccionOdistrito => {
+            this.agregarPin({ coords: evento.coordinate })
             // If agregado para ignorar clicks sobre el entorno -- REEMPLAZAR cuando haya tiempo
             if (seccionOdistrito.get('id') != 99999) {
                 // Detectar si se hizo click en una seccion o en un distrito
@@ -213,7 +220,7 @@ export class Mapa {
         const elResto = this.todosLosDistritos.getSource()
             .getFeatures()
             .filter(f => f.get('id') !== this.distritoEnfocado.get('id'))
-        
+
         this.distritosEnfocados.getSource().clear()
         this.distritosEnfocados.getSource().addFeatures(elResto)
 
@@ -222,7 +229,7 @@ export class Mapa {
 
     ocultarCalles() {
         this.openStreetMap.setVisible(false)
-        
+
         this.distritosEnfocados.getSource().clear()
         this.distritosEnfocados.getSource().addFeature(this.distritoEnfocado)
 
@@ -276,6 +283,11 @@ export class Mapa {
         this.llamarCallbackEnfocar(this._nivel, null)
 
         this.openStreetMap.setVisible(false)
+
+        // Mostrar TODOS los pines que haya
+        this.iconosEnMapa.setVisible(true)
+        this.iconosEnfocados.setVisible(false)
+
         this.ocultarSecciones()
         this.ocultarDistritosEnfocados()
         this.mostrarDistritos()
@@ -296,6 +308,11 @@ export class Mapa {
         this.llamarCallbackEnfocar(this._nivel, null)
 
         this.openStreetMap.setVisible(false)
+
+        // Mostrar TODOS los pines que haya
+        this.iconosEnMapa.setVisible(true)
+        this.iconosEnfocados.setVisible(false)
+
         this.ocultarDistritos()
         this.ocultarDistritosEnfocados()
         this.mostrarSecciones()
@@ -323,7 +340,7 @@ export class Mapa {
             .getSource()
             .getFeatures()
             .find(s => s.get('id') === id)
-        
+
         if (seccion) {
             this.enfocarSeccion(seccion)
         } else {
@@ -336,7 +353,7 @@ export class Mapa {
             .getSource()
             .getFeatures()
             .find(d => d.get('id') === id)
-        
+
         if (distrito) {
             this.ocultarDistritos()
             this.enfocarDistrito(distrito)
@@ -367,16 +384,16 @@ export class Mapa {
             .getSource()
             .getFeatures()
             .find(d => d.get('id') === id)
-    
+
         const estilo = id in this.estilosPersonalizados.distritos
-            ?   this.estilosPersonalizados.distritos[id].clone()
-            :   Estilos.POR_DEFECTO.clone()
+            ? this.estilosPersonalizados.distritos[id].clone()
+            : Estilos.POR_DEFECTO.clone()
 
         if (!!relleno) {
             estilo.setFill(new Fill({ color: hexToColor(relleno) }))
         }
 
-        
+
         const ancho = !!bordeGrueso
             ? 4
             : 2
@@ -402,7 +419,7 @@ export class Mapa {
             .getSource()
             .getFeatures()
             .find(d => d.get('id') === id)
-    
+
         const estilo = Estilos.POR_DEFECTO.clone();
 
         if (relleno) {
@@ -446,6 +463,7 @@ export class Mapa {
         this.distritosEnfocados.getSource().clear()
         this.distritosEnfocados.getSource().addFeatures([distrito])
         this.distritosEnfocados.setVisible(true)
+        this.soloMostrarPinesDeZona([distrito]);
 
         this.tagSelect.value = String(distrito.get('id'))
         this.establecerInteraccion(Interacciones.MouseWheelZoom, true)
@@ -473,6 +491,8 @@ export class Mapa {
         this.distritosEnfocados.getSource().addFeatures(distritosQueEnfocar)
         this.distritosEnfocados.setVisible(true)
 
+        this.soloMostrarPinesDeZona(distritosQueEnfocar)
+
         this.listarOpcionesEnSelect(
             distritosQueEnfocar,
             distritoToNombre
@@ -488,8 +508,8 @@ export class Mapa {
             .map(feature => ({ nombre: extraerNombre(feature), valor: feature.get('id') }))
             .sort((a, b) => a.nombre.localeCompare(b.nombre))
             .map(data => this.crearOptionTag(data.nombre, data.valor))
-        
-        
+
+
         while (this.tagSelect.firstChild) {
             this.tagSelect.removeChild(this.tagSelect.firstChild)
         }
@@ -502,7 +522,7 @@ export class Mapa {
     private crearOptionTag(nombre: string, valor: number) {
         const opt = document.createElement('option')
         opt.value = String(valor),
-        opt.appendChild(document.createTextNode(aTitulo(nombre)))
+            opt.appendChild(document.createTextNode(aTitulo(nombre)))
         return opt
     }
 
@@ -511,7 +531,7 @@ export class Mapa {
             this.todosLosDistritos.getSource().getFeatures(),
             distritoToNombre
         )
-        
+
         this.tagSelect.value = String(id)
     }
 
@@ -539,8 +559,8 @@ export class Mapa {
 
     private getEstiloPersonalizado(f: Feature): Style | undefined {
         const estilosPersonalizados = f.get('nombreSeccion')
-                ? this.estilosPersonalizados.secciones
-                : this.estilosPersonalizados.distritos;
+            ? this.estilosPersonalizados.secciones
+            : this.estilosPersonalizados.distritos;
         const id = f.get('id')
         if (id in estilosPersonalizados) {
             return estilosPersonalizados[id]
@@ -549,9 +569,9 @@ export class Mapa {
 
     private tieneEstiloPersonalizado(f: Feature): boolean {
         const estilos = f.get('nombreSeccion')
-                ? this.estilosPersonalizados.secciones
-                : this.estilosPersonalizados.distritos;
-        
+            ? this.estilosPersonalizados.secciones
+            : this.estilosPersonalizados.distritos;
+
         return f.get('id') in estilos;
     }
 
@@ -567,6 +587,43 @@ export class Mapa {
         }
     }
 
+    mostrarTodosLosIconos() {
+        this.iconosEnfocados.setVisible(false)
+        this.iconosEnMapa.setVisible(true)
+    }
+
+    /**
+     * Muestra SOLO los pines contenidos en una zona particular
+     */
+    private soloMostrarPinesDeZona(zona: Feature[]) {
+        const iconos = this.iconosEnMapa
+            .getSource().getFeatures()
+
+            // Dejar solo los iconos validos. Por algun motivo hay iconos que tienen una (o dos) coordenadas NaN.
+            .filter(i => this.tieneCoordenadasValidas(i))
+            
+            // Tomar todos los que estan DENTRO de la zona dada
+            .filter(i => {
+                const coords = (i.getGeometry() as Point).getCoordinates()
+                return zona.some(z => this.zonaContieneCoord(z, coords))
+            })
+        
+        this.iconosEnfocados.getSource().clear();
+        this.iconosEnfocados.getSource().addFeatures(iconos)
+        this.iconosEnMapa.setVisible(false);
+        this.iconosEnfocados.setVisible(true);
+    }
+
+    private tieneCoordenadasValidas(icono: Feature): boolean {
+        return icono.getGeometry().getType() === GeometryType.POINT
+            && !isNaN((icono.getGeometry() as Point).getCoordinates()[0])
+            && !isNaN((icono.getGeometry() as Point).getCoordinates()[1])
+    }
+
+    private zonaContieneCoord(zona: Feature, coord: Coordinate): boolean {
+        return zona.getGeometry().intersectsCoordinate(coord)
+    }
+
     public mostrarPinesEntidadesJudiciales(nombre, entidad, lonLatAtArray) {
         if (typeof entidad !== 'string') {
             console.debug('addIconToFeature: tipo es distinto de string')
@@ -578,19 +635,35 @@ export class Mapa {
         );
         return true;
     }
-    
+
+    public agregarPin(pos: { coords?: Coordinate, longLat?: [number, number] }) {
+        if (!pos.coords && !pos.longLat) {
+            throw new Error(`El pin no tienen ninguna posicion!! Pasale coords o longLat, cabeza`)
+        }
+
+        const position = pos.coords ?? pos.longLat
+
+        const icono = new Feature({geometry: new Point(position)})
+        const estilo = new Style({
+            image: new Icon({ anchor: [0.5, 1], scale: 0.7, src: "../../../" + getPinPath('TRIBUNALES', "PENAL") })
+        })
+        icono.setStyle(estilo);
+
+        this.iconosEnMapa.getSource().addFeature(icono)
+    }
+
     private crearIconFeature(entityName, Iconopath, latLonAsArray) {
         var iconFeature = new Feature({
             geometry: new Point(fromLonLat(latLonAsArray)),
             name: entityName ?? ''
         });
-    
+
         try {
             iconFeature.setStyle(new Style({
                 image: new Icon({
                     anchor: [0.5, 1],
                     src: Iconopath,
-                    scale: 0.7
+                    scale: 0.7,
                 })
             }));
         } catch (e) {
@@ -598,7 +671,7 @@ export class Mapa {
         }
         return iconFeature;
     }
-    
+
     establecerInteraccion(interaccion, habilitar = true) {
         this.map.getInteractions().forEach(function (e) {
             if (e instanceof interaccion) {

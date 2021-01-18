@@ -13,6 +13,7 @@ export function clickBotonRestaurar(boton: HTMLButtonElement, mapa: Mapa, switch
         mapa.mostrarDistritos()
         mapa.enfocarBuenosAires()
         mapa.ponerNivelEnTodosLosDistritos() // PARCHE, quitar
+        mapa.mostrarTodosLosIconos() // PARCHE, quitar
         switchCalles.checked = false
         document.querySelector("#showMapStreetsLabel").classList.add('d-none') // PROBLEMA?: esto esta duplicado, se hace lo mismo en otro lado
         localStorage.removeItem('FeatureEnfocado')

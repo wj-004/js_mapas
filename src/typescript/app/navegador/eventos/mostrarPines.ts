@@ -3,7 +3,7 @@ import { EntidadesJudicialesBsAs } from '../../../data/EntidadesJudiciales';
 
 export function mostrarPines(mapa: Mapa) {
     return evento => {
-        const tipoEvento = evento.detail.tipo;
+        const tipoEvento = (evento.detail.tipo as string).toUpperCase();
         if (tipoEvento == 'ORGANISMOS') {
             throw new Error('ORGANISMOS Aun no esta implementado!!')
         } else {
