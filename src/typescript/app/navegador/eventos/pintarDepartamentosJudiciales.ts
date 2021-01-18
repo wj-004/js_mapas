@@ -2,21 +2,71 @@ import { Mapa } from "../../../mapa/Mapa";
 
 type Evento = {
     detail: {
-        data: [
-            { id: number, color: string}[]
-        ]
+        data: Distrito[]
     }
 }
 
+type Distrito = { id: number, seccion_id: number }
+
 export function pintarDepartamentosJudiciales(mapa: Mapa) {
     return evento => {
-        console.log(evento.detail)
+        // Separar distritos por seccion (en el futuro seran separados por depto judicial)
+        const distritos = (evento as Evento).detail.data
+        const distritosPorSeccion = agrupar(distritos, d => d.seccion_id)
+
         mapa.restablecerEstiloDeDistritos();
-        const departamentos = evento.detail.data
-        for (let departamento of departamentos) {
-            for (let distrito of departamento) {
-                mapa.pintarDistritoPorID(distrito.id, distrito.color);
+
+        for (let grupoId in distritosPorSeccion) {
+            const grupo = distritosPorSeccion[grupoId]
+            const color = unColor();
+            for (let distrito of grupo) {
+                mapa.pintarDistritoPorID(distrito.id, color.relleno, color.borde);
             }
         }
     }
 }
+
+function agrupar<A>(datos: A[], criterio: (a: A) => number): { [id: number]: A[] } {
+    const grupos: { [id: number]: A[] } = {}
+
+    for (let a of datos) {
+        const grupoId = criterio(a)
+        if (!grupos[grupoId]) {
+            grupos[grupoId] = []
+        }
+        grupos[grupoId].push(a)
+    }
+
+    return grupos
+}
+
+/**
+ * Devuelve un par de colores cualquiera de la paleta de abajo
+ */
+function unColor(): { borde: string, relleno: string } {
+    let i =  Math.round(Math.random() * paleta.length)
+    i = i == paleta.length
+        ? i - 1
+        : i
+    const relleno = paleta[i]
+    const borde = i <= 4
+        ?   paleta[paleta.length - 1]
+        :   paleta[0];
+    return { relleno, borde }
+}
+
+/**
+ * Paleta de colores que se va a usar hasta tener los valores reales
+ */
+const paleta = [
+    '#ffba08',  // Amarillo
+    '#faa307',
+    '#f48c06',
+    '#e85d04',
+    '#d00000',
+    '#dc2f02',
+    '#9d0208',
+    '#6a040f',
+    '#370617',
+    '#03071e',  // Negro azulado
+]
