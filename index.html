@@ -23,7 +23,7 @@
 
 <body>
     <div class="col-12 col-sm-12 col-md-5 col-lg-5 col-xl-5" style="background-color: #015875; color:#ffffff">
-        <div class="row bg-info p-3">
+        <div class="row bg-info p-2">
             <span class="mr-1">Mapa Interactivo</span>
             <span id="ubicacion"></span>
         </div>
@@ -37,15 +37,22 @@
             </div>
         </div>
         <div class="row d-flex justify-content-center align-items-center">
-            <div class="col-sm-12 col-md-8">
-                <div class="row mt-4 mt-md-0">
-                    <div class="col-md-12">
-                        <div id="map" class="map" tabindex="0"></div>
-                        <div id="top-popup" title="" class="rounded"></div>
-                    </div>
+            <div class="mt-4 mt-md-0 d-flex dialogo-carga--container">
+                <div class="shadow dialogo-carga--dialogo">
+                    <span class="m-2">Cargando</span>
+
+                    <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
                 </div>
             </div>
-            <div class="py-3">
+
+            <div class="mt-4 mt-md-0 mapa--container d-none">
+                <div class="col-md-12 d-flex justify-content-center">
+                    <div id="map" class="map" tabindex="0"></div>
+                    <div id="top-popup" title="" class="rounded"></div>
+                </div>
+            </div>
+
+            <div class="py-3 mapa--controles d-none">
                 <div class="btn-group btn-group-toggle" data-toggle="buttons">
                     <label class="btn btn-info active">
                         <input type="radio" onclick="selectLayer()" name="mapShowOption" id="showSecciones"
