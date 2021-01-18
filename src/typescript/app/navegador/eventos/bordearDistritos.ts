@@ -2,11 +2,11 @@ import { Mapa } from "../../../mapa/Mapa";
 
 export function bordearDistritos(mapa: Mapa) {
     return evento => {
-        const distritos = evento.detail.data.distritos;
-        const borde = evento.detail.data.color;
+        const ids = evento.detail.distritos;
+        const borde = evento.detail.color;
 
-        for (let distrito of distritos) {
-            mapa.pintarDistritoPorID(distrito.id, undefined, borde, true)
+        for (let distrito of ids) {
+            mapa.pintarDistritoPorID(Number(distrito), undefined, borde, true)
         }
     }
 }

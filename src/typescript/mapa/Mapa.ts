@@ -370,9 +370,11 @@ export class Mapa {
             .getFeatures()
             .find(d => d.get('id') === id)
     
-        const estilo = Estilos.POR_DEFECTO.clone();
+        const estilo = id in this.estilosPersonalizados.distritos
+            ?   this.estilosPersonalizados.distritos[id].clone()
+            :   Estilos.POR_DEFECTO.clone()
 
-        if (relleno) {
+        if (!!relleno) {
             estilo.setFill(new Fill({ color: hexToColor(relleno) }))
         }
 
@@ -381,7 +383,7 @@ export class Mapa {
             ? 4
             : 2
 
-        if (borde) {
+        if (!!borde) {
             estilo.setStroke(new Stroke({ color: hexToColor(borde), width: ancho }));
         } else {
             estilo.setStroke(new Stroke({
