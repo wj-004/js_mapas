@@ -26,8 +26,17 @@ import * as Interacciones from 'ol/interaction';
 import * as Control from 'ol/control';
 import GeometryType from 'ol/geom/GeometryType';
 import { Coordinate } from 'ol/coordinate';
+import GeometryCollection from 'ol/geom/GeometryCollection';
 
 const extentBuenosAires = [...fromLonLat([-64, -42]), ...fromLonLat([-56, -32])] as Extent
+
+
+type Estado = {
+    capas: string[],
+    pines: string[],
+    zonaEnfocada: number[]
+    colores: { id: number, relleno?: string, borde?: string }[]
+}
 
 /**
  * Valor de la opcion "Todos" en el selector de seccion/distrito.
@@ -36,20 +45,30 @@ const extentBuenosAires = [...fromLonLat([-64, -42]), ...fromLonLat([-56, -32])]
  */
 const OPCION_TODOS = String(-1);
 
+const CAPA_OPEN_STREET_MAP = 'openStreetMap';
+
 export class Mapa {
 
     private map: Map;
 
-    // Capas del mapa
-    private openStreetMap: TileLayer;
-    private todosLosDistritos: VectorLayer;
-    private secciones: VectorLayer;
-    private distritosEnfocados: VectorLayer;
-    private iconosEnfocados: VectorLayer;
-    private entornoBsAs: VectorLayer;
-    private iconosEnMapa: VectorLayer;
+    private capas: { [nombre: string]: VectorLayer | TileLayer } = {}
+    private estado: Estado = { capas: [], pines: [], zonaEnfocada: [], colores: [] }
 
-    private distritoEnfocado: Feature;
+    /**
+     * Capa del mapa que se tendra en cuenta a la hora de enfocar zonas
+     */
+    private capaActual: VectorLayer
+
+    // Capas del mapa
+    private openStreetMap: TileLayer; // Se podria hacer un getter privado para esta capa y otras
+
+    private zonaEnfocada: VectorLayer;      
+    private iconos: VectorLayer;
+
+    private todosLosDistritos: VectorLayer; // OBSOLETA
+    private secciones: VectorLayer;         // OBSOLETA
+    private todosLosIconos: VectorLayer;    // OBSOLETA
+    private distritoEnfocado: Feature;      // OBSOLETA
 
     private elementoResaltado: FeatureLike = null;
 
@@ -67,47 +86,36 @@ export class Mapa {
     constructor(
         private contenedor: HTMLElement,
         private tagSelect: HTMLSelectElement,
-        capas: VectorLayer[]
+        private entornoBsAs: VectorLayer,
+        capas: { nombre: string, layer: VectorLayer }[],
     ) {
+        // Guardar capas
+        for (let capa of capas) {
+            this.capas[capa.nombre] = capa.layer;
+            capa.layer.setStyle(Estilos.POR_DEFECTO);
+            capa.layer.setVisible(false);
+        }
+
         // Cargar mapa de OpenStreetMap
-        this.openStreetMap = new TileLayer({
+        this.capas['openStreetMap'] = new TileLayer({
             source: new OSM({ attributions: [] })
         })
+        this.capas['openStreetMap'].setVisible(false)
 
-        // Cargar secciones, distritos y entorno
-        const [distritos, secciones, entornoBsAs] = capas;
-        this.todosLosDistritos = distritos;
-        this.secciones = secciones;
-        this.entornoBsAs = entornoBsAs;
-        this.distritosEnfocados = new VectorLayer({ source: new VectorSource() });
-        this.iconosEnfocados = new VectorLayer({ source: new VectorSource() });
-        this.iconosEnMapa = new VectorLayer({ source: new VectorSource() });
-
-        // Establecer visibilidad
-        this.openStreetMap.setVisible(false)
-        this.todosLosDistritos.setVisible(true)
-        this.secciones.setVisible(false)
-        this.entornoBsAs.setVisible(true)
-        this.iconosEnMapa.setVisible(true)
-        this.iconosEnfocados.setVisible(false);
-
-        // Establecer estilos
-        this.todosLosDistritos.setStyle(Estilos.POR_DEFECTO)
-        this.secciones.setStyle(Estilos.POR_DEFECTO)
-        this.distritosEnfocados.setStyle(Estilos.POR_DEFECTO)
+        // Inicializar capas especiales
+        this.zonaEnfocada = new VectorLayer({ source: new VectorSource() });
+        this.zonaEnfocada.setStyle(Estilos.POR_DEFECTO)
+        this.iconos = new VectorLayer({ source: new VectorSource() });
         this.entornoBsAs.setStyle(Estilos.ENTORNO)
 
         // Mostrar mapa
         this.map = new Map({
             target: this.contenedor,
             layers: [
-                this.openStreetMap,
-                this.todosLosDistritos,
-                this.distritosEnfocados,
-                this.secciones,
+                ...Object.values(this.capas),
+                this.zonaEnfocada,
                 this.entornoBsAs,
-                this.iconosEnMapa,
-                this.iconosEnfocados
+                this.iconos
             ],
             view: new View({
                 center: fromLonLat([-60, -37.3]),
@@ -137,12 +145,79 @@ export class Mapa {
         this.map.on('pointermove', (e) => this.alMoverMouse(e))
         this.map.on('click', (e) => this.alHacerClick(e))
 
-        this.listarOpcionesEnSelect(
-            this.todosLosDistritos.getSource().getFeatures(),
-            distritoToNombre
-        )
+        // this.listarOpcionesEnSelect(
+        //     this.todosLosDistritos.getSource().getFeatures(),
+        //     distritoToNombre
+        // )
 
         this.tagSelect.value = OPCION_TODOS
+    }
+
+    setEstado(estado: Partial<Estado>) {
+        if (estado.capas) {
+            this.mostrarUOcultarCapas(estado.capas);
+        }
+
+        // if (estado.pines) {
+        //     this.mostrarPines(estado.capas);
+        // }
+
+        if (estado.zonaEnfocada) {
+            this.enfocarZona(estado.zonaEnfocada);
+            // this.alEnfocar();
+        }
+
+        // if (estado.colores) {
+        //     this.pintarZonas(estado.colores);
+        // }
+
+        this.estado = { ...this.estado, ...estado }
+    }
+
+    /**
+     * Toma una lista de capas y hace que solo esas sean visibles.
+     * 
+     * @param capasQueMostrar lista de capas que deben hacerce/permanecer visibles
+     */
+    private mostrarUOcultarCapas(capasQueMostrar: string[]) {
+        for (let nombre of capasQueMostrar) {
+            this.capas[nombre].setVisible(true)
+        }
+        this.capaActual = this.capas[capasQueMostrar[capasQueMostrar.length - 1]] as VectorLayer;
+        
+        const capasQueOcultar = Object.keys(this.capas)
+            .filter(nombreCapa => !capasQueMostrar.includes(nombreCapa))
+
+        if (capasQueOcultar.length > 0) {
+            for (let nombre of capasQueOcultar) {
+                this.capas[nombre].setVisible(false)
+            }
+        }
+    }
+
+    private enfocarZona(ids: number[]) {
+        if (ids.length > 0) {
+            const porciones = this.capaActual
+                .getSource()
+                .getFeatures()
+                .filter(z => ids.includes(Number(z.get('id'))))
+        
+            const coleccion = new GeometryCollection(porciones.map(z => z.getGeometry()))
+            this.map.getView().fit(coleccion.getExtent())
+
+            this.zonaEnfocada.getSource().clear()
+            this.zonaEnfocada.getSource().addFeatures(porciones);
+            this.zonaEnfocada.setVisible(true)
+
+            for (let capa of Object.values(this.capas)) {
+                capa.setVisible(false)
+            }
+        } else {
+            this.zonaEnfocada.setVisible(false);
+            this.zonaEnfocada = null;
+            this.mostrarUOcultarCapas(this.estado.capas)
+            this.map.getView().fit(this.capaActual.getSource().getExtent())
+        }
     }
 
     alMoverMouse(evento: MapBrowserEvent) {
@@ -177,6 +252,7 @@ export class Mapa {
 
     alHacerClick(evento: MapBrowserEvent) {
         this.map.forEachFeatureAtPixel(evento.pixel, seccionOdistrito => {
+            console.log(seccionOdistrito.get('id'))
             // If agregado para ignorar clicks sobre el entorno -- REEMPLAZAR cuando haya tiempo
             if (seccionOdistrito.get('id') != 99999) {
                 // Detectar si se hizo click en una seccion o en un distrito
@@ -220,8 +296,8 @@ export class Mapa {
             .getFeatures()
             .filter(f => f.get('id') !== this.distritoEnfocado.get('id'))
 
-        this.distritosEnfocados.getSource().clear()
-        this.distritosEnfocados.getSource().addFeatures(elResto)
+        this.zonaEnfocada.getSource().clear()
+        this.zonaEnfocada.getSource().addFeatures(elResto)
 
         this.map.getView().fit(this.distritoEnfocado.getGeometry().getExtent())
     }
@@ -229,8 +305,8 @@ export class Mapa {
     ocultarCalles() {
         this.openStreetMap.setVisible(false)
 
-        this.distritosEnfocados.getSource().clear()
-        this.distritosEnfocados.getSource().addFeature(this.distritoEnfocado)
+        this.zonaEnfocada.getSource().clear()
+        this.zonaEnfocada.getSource().addFeature(this.distritoEnfocado)
 
         this.map.getView().fit(this.distritoEnfocado.getGeometry().getExtent())
     }
@@ -254,7 +330,7 @@ export class Mapa {
     }
 
     ocultarDistritosEnfocados() {
-        this.distritosEnfocados.setVisible(false)
+        this.zonaEnfocada.setVisible(false)
     }
 
     mostrarSecciones() {
@@ -270,11 +346,11 @@ export class Mapa {
     }
 
     mostrarIconosEnMapa() {
-        this.iconosEnMapa.setVisible(true)
+        this.todosLosIconos.setVisible(true)
     }
 
     ocultarIconosEnMapa() {
-        this.iconosEnMapa.setVisible(false)
+        this.todosLosIconos.setVisible(false)
     }
 
     enfocarDistritos() {
@@ -284,8 +360,8 @@ export class Mapa {
         this.openStreetMap.setVisible(false)
 
         // Mostrar TODOS los pines que haya
-        this.iconosEnMapa.setVisible(true)
-        this.iconosEnfocados.setVisible(false)
+        this.todosLosIconos.setVisible(true)
+        this.iconos.setVisible(false)
 
         this.ocultarSecciones()
         this.ocultarDistritosEnfocados()
@@ -309,8 +385,8 @@ export class Mapa {
         this.openStreetMap.setVisible(false)
 
         // Mostrar TODOS los pines que haya
-        this.iconosEnMapa.setVisible(true)
-        this.iconosEnfocados.setVisible(false)
+        this.todosLosIconos.setVisible(true)
+        this.iconos.setVisible(false)
 
         this.ocultarDistritos()
         this.ocultarDistritosEnfocados()
@@ -459,9 +535,9 @@ export class Mapa {
 
         this.distritoEnfocado = distrito
         this.ocultarSecciones()
-        this.distritosEnfocados.getSource().clear()
-        this.distritosEnfocados.getSource().addFeatures([distrito])
-        this.distritosEnfocados.setVisible(true)
+        this.zonaEnfocada.getSource().clear()
+        this.zonaEnfocada.getSource().addFeatures([distrito])
+        this.zonaEnfocada.setVisible(true)
         this.soloMostrarPinesDeZona([distrito]);
 
         this.tagSelect.value = String(distrito.get('id'))
@@ -486,9 +562,9 @@ export class Mapa {
             .getFeatures()
             .filter(feature => idDistritos.includes(feature.get('id')))
 
-        this.distritosEnfocados.getSource().clear()
-        this.distritosEnfocados.getSource().addFeatures(distritosQueEnfocar)
-        this.distritosEnfocados.setVisible(true)
+        this.zonaEnfocada.getSource().clear()
+        this.zonaEnfocada.getSource().addFeatures(distritosQueEnfocar)
+        this.zonaEnfocada.setVisible(true)
 
         this.soloMostrarPinesDeZona(distritosQueEnfocar)
 
@@ -576,8 +652,8 @@ export class Mapa {
 
     //INICIO DE MANEJO DE ICONOS - MODIFICAR
     public deleteIconFeatures() {
-        if (!!this.iconosEnMapa && !!this.iconosEnMapa.getSource()) {
-            const iconos = this.iconosEnMapa.getSource();
+        if (!!this.todosLosIconos && !!this.todosLosIconos.getSource()) {
+            const iconos = this.todosLosIconos.getSource();
             iconos.getFeatures().forEach(function (feature) {
                 if (feature.getGeometry().getType() === 'Point') {
                     iconos.removeFeature(feature);
@@ -587,15 +663,15 @@ export class Mapa {
     }
 
     mostrarTodosLosIconos() {
-        this.iconosEnfocados.setVisible(false)
-        this.iconosEnMapa.setVisible(true)
+        this.iconos.setVisible(false)
+        this.todosLosIconos.setVisible(true)
     }
 
     /**
      * Muestra SOLO los pines contenidos en una zona particular
      */
     private soloMostrarPinesDeZona(zona: Feature[]) {
-        const iconos = this.iconosEnMapa
+        const iconos = this.todosLosIconos
             .getSource().getFeatures()
 
             // Dejar solo los iconos validos. Por algun motivo hay iconos que tienen una (o dos) coordenadas NaN.
@@ -607,10 +683,10 @@ export class Mapa {
                 return zona.some(z => this.zonaContieneCoord(z, coords))
             })
         
-        this.iconosEnfocados.getSource().clear();
-        this.iconosEnfocados.getSource().addFeatures(iconos)
-        this.iconosEnMapa.setVisible(false);
-        this.iconosEnfocados.setVisible(true);
+        this.iconos.getSource().clear();
+        this.iconos.getSource().addFeatures(iconos)
+        this.todosLosIconos.setVisible(false);
+        this.iconos.setVisible(true);
     }
 
     private tieneCoordenadasValidas(icono: Feature): boolean {
@@ -629,7 +705,7 @@ export class Mapa {
         }
         var iconoPath = "../../../" + getPinPath('TRIBUNALES', entidad);
 
-        this.iconosEnMapa.getSource().addFeature(
+        this.todosLosIconos.getSource().addFeature(
             this.crearIconFeature(nombre, iconoPath, lonLatAtArray)
         );
         return true;
@@ -648,7 +724,7 @@ export class Mapa {
         })
         icono.setStyle(estilo);
 
-        this.iconosEnMapa.getSource().addFeature(icono)
+        this.todosLosIconos.getSource().addFeature(icono)
     }
 
     private crearIconFeature(entityName, Iconopath, latLonAsArray) {

@@ -2,9 +2,9 @@ import { configurarElementosDeInterfaz } from "./app/interfaz/configurarElemento
 import { mostrarMapa } from "./app/interfaz/mostrarMapa";
 import { quitarDialogoCarga } from "./app/interfaz/quitarDialogoCarga";
 import { configurarListenersDelMapa } from "./app/mapa/configurarListenersDelMapa";
-import { crearMapa } from "./app/mapa/crearMapa";
 import { enfocarZonaGuardada } from "./app/mapa/enfocarFeatureGuardado";
 import { configurarListenersDelNavegador } from "./app/navegador/configurarListenersDelNavegador";
+import { Mapa } from "./mapa/Mapa";
 import { getLayers } from "./util/getLayer";
 import { livewireEmit } from "./util/livewireEmit";
 
@@ -21,7 +21,17 @@ async function inicializar() {
     quitarDialogoCarga()
     mostrarMapa()
 
-    const mapa = crearMapa(capas)
+    const mapa = new Mapa(
+        document.querySelector("#map"),
+        document.querySelector("#idSecciones"),
+        capas[2],
+        [
+            { nombre: 'municipios', layer: capas[0] },
+            { nombre: 'secciones', layer: capas[1] }
+        ]
+    )
+
+    mapa.setEstado({ capas: ['municipios'] })
     
     configurarListenersDelMapa(mapa)
     configurarElementosDeInterfaz(mapa)
