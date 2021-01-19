@@ -1,4 +1,4 @@
-import { Feature, Map, MapBrowserEvent, View, Overlay } from 'ol'
+import { Feature, Map, MapBrowserEvent, View } from 'ol'
 import { fromLonLat } from 'ol/proj';
 import OSM from 'ol/source/OSM'
 import FullScreenControl from 'ol/control/FullScreen'
@@ -177,7 +177,6 @@ export class Mapa {
 
     alHacerClick(evento: MapBrowserEvent) {
         this.map.forEachFeatureAtPixel(evento.pixel, seccionOdistrito => {
-            this.agregarPin({ coords: evento.coordinate })
             // If agregado para ignorar clicks sobre el entorno -- REEMPLAZAR cuando haya tiempo
             if (seccionOdistrito.get('id') != 99999) {
                 // Detectar si se hizo click en una seccion o en un distrito
