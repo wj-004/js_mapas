@@ -18,7 +18,6 @@ import Fill from 'ol/style/Fill';
 import Stroke from 'ol/style/Stroke';
 import { resaltar } from './estilo/resaltar';
 import { hexToColor } from './estilo/hexToColor';
-import { EventoEnfocar } from './eventos/EventoEnfocar';
 import { aTitulo } from '../util/aTitulo';
 import Point from 'ol/geom/Point';
 import { getPinPath } from '../util/getPinPath';
@@ -31,7 +30,7 @@ import GeometryCollection from 'ol/geom/GeometryCollection';
 const extentBuenosAires = [...fromLonLat([-64, -42]), ...fromLonLat([-56, -32])] as Extent
 
 
-type Estado = {
+export type Estado = {
     capas: string[],
     pines: string[],
     zonaEnfocada: number[]
@@ -55,6 +54,7 @@ export class Mapa {
 
     private capas: { [nombre: string]: VectorLayer | TileLayer } = {}
     estado: Estado = { capas: [], pines: [], zonaEnfocada: [], estilos: [] }
+    historialDeEstado: Estado[] = [];
 
     /**
      * Capa del mapa que se tendra en cuenta a la hora de enfocar zonas
@@ -81,7 +81,7 @@ export class Mapa {
     get nivel(): Nivel { return this._nivel }
 
     private callbackAlClickearCualquierDistrito: Funcion<number, void>;
-    private callbackAlEnfocar: Funcion<EventoEnfocar, void>;
+    private callbackAlEnfocar: Funcion<Estado, void>;
 
     private estilosPersonalizados: {
         [ nombreCapa: string ]: { [id: number]: Style },
@@ -162,7 +162,7 @@ export class Mapa {
      * Establece el estado del mapa. El estado del mapa esta compuesto por:
      *  - Las capas que estan visibles
      *  - Las zonas que estan enfocadas
-     *  - Los pines que estan visibles
+     *  - Los pines que estan visibles (PENDIENTE)
      *  - Los colores de las zonas de la capa mas superior
      *  - Las referencias de los colores (PENDIENTE)
      * 
@@ -175,6 +175,9 @@ export class Mapa {
      * @param emitirEventos bandera que indica si se emitiran o no eventos
      */
     setEstado(estado: Partial<Estado>, emitirEventos = true) {
+        this.historialDeEstado.push(this.estado);
+        this.estado = { ...this.estado, ...estado }
+
         if (estado.capas) {
             this.mostrarUOcultarCapas(estado.capas);
         }
@@ -182,7 +185,7 @@ export class Mapa {
         if (estado.zonaEnfocada) {
             this.enfocarZona(estado.zonaEnfocada);
             if (emitirEventos) {
-                // this.alEnfocar();
+                this.llamarCallbackEnfocar();
             }
         }
 
@@ -193,8 +196,6 @@ export class Mapa {
         // if (estado.pines) {
         //     this.mostrarPines(estado.capas);
         // }
-
-        this.estado = { ...this.estado, ...estado }
     }
 
     /**
@@ -428,7 +429,6 @@ export class Mapa {
 
     enfocarDistritos() {
         this._nivel = Nivel.TODOS_LOS_DISTRITOS
-        this.llamarCallbackEnfocar(this._nivel, null)
 
         this.openStreetMap.setVisible(false)
 
@@ -453,7 +453,6 @@ export class Mapa {
 
     enfocarSecciones() {
         this._nivel = Nivel.TODAS_LAS_SECCIONES
-        this.llamarCallbackEnfocar(this._nivel, null)
 
         this.openStreetMap.setVisible(false)
 
@@ -602,7 +601,6 @@ export class Mapa {
 
     private enfocarDistrito(distrito: Feature) {
         this._nivel = Nivel.UN_DISTRITO
-        this.llamarCallbackEnfocar(this._nivel, distrito)
 
         this.enfocarFeature(distrito)
 
@@ -620,7 +618,6 @@ export class Mapa {
 
     private enfocarSeccion(seccion: Feature) {
         this._nivel = Nivel.UNA_SECCION
-        this.llamarCallbackEnfocar(this._nivel, seccion)
 
         this.enfocarFeature(seccion)
         const seccionId: number = seccion.get('id');
@@ -691,13 +688,13 @@ export class Mapa {
         this.callbackAlClickearCualquierDistrito = callback
     }
 
-    alEnfocar(callback: Funcion<EventoEnfocar, void>) {
+    alEnfocar(callback: Funcion<Estado, void>) {
         this.callbackAlEnfocar = callback;
     }
 
-    private llamarCallbackEnfocar(nivel: Nivel, feature: Feature) {
+    private llamarCallbackEnfocar() {
         if (this.callbackAlEnfocar) {
-            this.callbackAlEnfocar(new EventoEnfocar(nivel, feature));
+            this.callbackAlEnfocar(this.estado);
         }
     }
 

@@ -1,43 +1,41 @@
-import { EventoEnfocar } from "../../../mapa/eventos/EventoEnfocar"
-import { Nivel } from "../../../mapa/Nivel"
+import { Estado } from "../../../mapa/Mapa"
 import { aTitulo } from "../../../util/aTitulo"
 
-export function alEnfocar(evento: EventoEnfocar) {
-    guardarOremoverZonaEnfocada(evento)
-    establecerUbicacion(evento)
-    mostrarUocultarSwitchDeCalles(evento)
+export function alEnfocar(estadoMapa: Estado) {
+    localStorage.setItem('EstadoMapa', JSON.stringify(estadoMapa))
+    establecerUbicacion(estadoMapa)
+    mostrarUocultarSwitchDeCalles(estadoMapa)
 }
 
-function guardarOremoverZonaEnfocada(evento: EventoEnfocar) {
-    switch (evento.nivel) {
-        case Nivel.TODAS_LAS_SECCIONES:
-        case Nivel.TODOS_LOS_DISTRITOS:
-            localStorage.removeItem('FeatureEnfocado')
-            break
-        case Nivel.UNA_SECCION:
-        case Nivel.UN_DISTRITO:
-            localStorage.setItem('FeatureEnfocado', JSON.stringify(evento))
-            break
-    }
+/**
+ * Establece el nombre de la seccion/municipio/zona en el titulo del mapa.
+ * 
+ * NO FUNCIONA (21/01/2021)
+ */
+function establecerUbicacion(estadoMapa: Estado) {    
+    // const tagUbicacion = document.querySelector('#ubicacion')
+
+    // if (tagUbicacion.hasChildNodes()) {
+    //     tagUbicacion.removeChild(tagUbicacion.lastChild)
+    // }
+
+    // if (!!evento.nombre) {
+    //     tagUbicacion.appendChild(document.createTextNode("- " + aTitulo(evento.nombre)))
+    // }
 }
 
-function establecerUbicacion(evento: EventoEnfocar) {    
-    const tagUbicacion = document.querySelector('#ubicacion')
-
-    if (tagUbicacion.hasChildNodes()) {
-        tagUbicacion.removeChild(tagUbicacion.lastChild)
-    }
-
-    if (!!evento.nombre) {
-        tagUbicacion.appendChild(document.createTextNode("- " + aTitulo(evento.nombre)))
-    }
-}
-
-function mostrarUocultarSwitchDeCalles(evento: EventoEnfocar) {
-    const toggle = document.querySelector("#showMapStreetsLabel") as HTMLLabelElement
-    if (evento.nivel === Nivel.UN_DISTRITO) {
-        toggle.classList.remove('d-none')
-    } else {
-        toggle.classList.add('d-none')
-    }
+/**
+ * NO FUNCIONA (21/01/2021)
+ * 
+ * El toggle de calles se muestra si se cumple las siguientes dos:
+ *  - La capa actual es la de municipios/distritos
+ *  - Hay una o mas zonas enfocadas
+ */
+function mostrarUocultarSwitchDeCalles(estadoMapa: Estado) {
+    // const toggle = document.querySelector("#showMapStreetsLabel") as HTMLLabelElement
+    // if (evento.nivel === Nivel.UN_DISTRITO) {
+    //     toggle.classList.remove('d-none')
+    // } else {
+    //     toggle.classList.add('d-none')
+    // }
 }

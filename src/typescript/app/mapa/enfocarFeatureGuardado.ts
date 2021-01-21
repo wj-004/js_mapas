@@ -1,9 +1,9 @@
 import { Mapa } from "../../mapa/Mapa"
 
 export function enfocarZonaGuardada(mapa: Mapa) {
-    const featureEnfocadoMaybe = localStorage.getItem('FeatureEnfocado')
-    if (!!featureEnfocadoMaybe) {
-        const { nivel, id } = JSON.parse(featureEnfocadoMaybe)
-        mapa.enfocarFeatureEnNivel(id, nivel)
+    const estadoMapaMaybe = localStorage.getItem('EstadoMapa')
+    if (!!estadoMapaMaybe) {
+        const estadoMapa = JSON.parse(estadoMapaMaybe)
+        mapa.setEstado(estadoMapa, false);
     }
 }
