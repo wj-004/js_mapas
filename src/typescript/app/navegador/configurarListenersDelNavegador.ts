@@ -10,7 +10,7 @@ import { pintarDepartamentosJudiciales } from "./eventos/pintarDepartamentosJudi
 import { bordearDistritos } from "./eventos/bordearDistritos";
 
 export function configurarListenersDelNavegador(mapa: Mapa) {
-    window.addEventListener('pintarDistritos', pintarMapa);
+    window.addEventListener('pintarDistritos', pintarMapa); // OBSOLETO, BORRAR
 
     window.addEventListener('pintarDistritosIntendentes', pintarDistritosIntendents(mapa));
 

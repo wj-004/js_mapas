@@ -35,8 +35,10 @@ type Estado = {
     capas: string[],
     pines: string[],
     zonaEnfocada: number[]
-    colores: { id: number, relleno?: string, borde?: string }[]
+    estilos: EstiloZona[]
 }
+
+type EstiloZona = { id: number, relleno?: string, borde?: string, bordeGrueso?: boolean }
 
 /**
  * Valor de la opcion "Todos" en el selector de seccion/distrito.
@@ -52,12 +54,15 @@ export class Mapa {
     private map: Map;
 
     private capas: { [nombre: string]: VectorLayer | TileLayer } = {}
-    private estado: Estado = { capas: [], pines: [], zonaEnfocada: [], colores: [] }
+    estado: Estado = { capas: [], pines: [], zonaEnfocada: [], estilos: [] }
 
     /**
      * Capa del mapa que se tendra en cuenta a la hora de enfocar zonas
      */
-    private capaActual: VectorLayer
+    nombreCapaActual: string
+    get capaActual(): VectorLayer {
+        return this.capas[this.nombreCapaActual] as VectorLayer;
+    }
 
     // Capas del mapa
     private openStreetMap: TileLayer; // Se podria hacer un getter privado para esta capa y otras
@@ -79,8 +84,7 @@ export class Mapa {
     private callbackAlEnfocar: Funcion<EventoEnfocar, void>;
 
     private estilosPersonalizados: {
-        distritos: { [id: number]: Style },
-        secciones: { [id: number]: Style }
+        [ nombreCapa: string ]: { [id: number]: Style },
     } = { distritos: {}, secciones: {} }
 
     constructor(
@@ -92,6 +96,7 @@ export class Mapa {
         // Guardar capas
         for (let capa of capas) {
             this.capas[capa.nombre] = capa.layer;
+            this.estilosPersonalizados[capa.nombre] = {}
             capa.layer.setStyle(Estilos.POR_DEFECTO);
             capa.layer.setVisible(false);
         }
@@ -153,22 +158,40 @@ export class Mapa {
         this.tagSelect.value = OPCION_TODOS
     }
 
-    setEstado(estado: Partial<Estado>) {
+    /**
+     * Establece el estado del mapa. El estado del mapa esta compuesto por:
+     *  - Las capas que estan visibles
+     *  - Las zonas que estan enfocadas
+     *  - Los pines que estan visibles
+     *  - Los colores de las zonas de la capa mas superior
+     *  - Las referencias de los colores (PENDIENTE)
+     * 
+     * Este metodo se encarga de setear todo eso de manera incremental. Por eso
+     * recibe como parametro un estado parcial, un estado que puede tener todos
+     * los atributos mencionados arriba o no. Ese estado parcial se agrega al
+     * estado "actual" del mapa, sobreescribiendo los atributos que corresponda.
+     * 
+     * @param estado nuevo estado del mapa
+     * @param emitirEventos bandera que indica si se emitiran o no eventos
+     */
+    setEstado(estado: Partial<Estado>, emitirEventos = true) {
         if (estado.capas) {
             this.mostrarUOcultarCapas(estado.capas);
         }
 
-        // if (estado.pines) {
-        //     this.mostrarPines(estado.capas);
-        // }
-
         if (estado.zonaEnfocada) {
             this.enfocarZona(estado.zonaEnfocada);
-            // this.alEnfocar();
+            if (emitirEventos) {
+                // this.alEnfocar();
+            }
         }
 
-        // if (estado.colores) {
-        //     this.pintarZonas(estado.colores);
+        if (estado.estilos) {
+            this.pintarZonas(estado.estilos);
+        }
+
+        // if (estado.pines) {
+        //     this.mostrarPines(estado.capas);
         // }
 
         this.estado = { ...this.estado, ...estado }
@@ -177,13 +200,13 @@ export class Mapa {
     /**
      * Toma una lista de capas y hace que solo esas sean visibles.
      * 
-     * @param capasQueMostrar lista de capas que deben hacerce/permanecer visibles
+     * @param capasQueMostrar lista de capas que deben hacerse/permanecer visibles
      */
     private mostrarUOcultarCapas(capasQueMostrar: string[]) {
         for (let nombre of capasQueMostrar) {
             this.capas[nombre].setVisible(true)
         }
-        this.capaActual = this.capas[capasQueMostrar[capasQueMostrar.length - 1]] as VectorLayer;
+        this.nombreCapaActual = capasQueMostrar[capasQueMostrar.length - 1];
         
         const capasQueOcultar = Object.keys(this.capas)
             .filter(nombreCapa => !capasQueMostrar.includes(nombreCapa))
@@ -214,34 +237,84 @@ export class Mapa {
             }
         } else {
             this.zonaEnfocada.setVisible(false);
-            this.zonaEnfocada = null;
             this.mostrarUOcultarCapas(this.estado.capas)
             this.map.getView().fit(this.capaActual.getSource().getExtent())
         }
     }
 
-    alMoverMouse(evento: MapBrowserEvent) {
+    private pintarZonas(estilos: EstiloZona[]) {
+        for (let estilo of estilos) {
+            const style = this.aStyle(estilo);
+            const zona = this.buscarZona(estilo.id);
+            if (zona && (!!estilo.relleno || !!estilo.borde)) {
+                zona.setStyle(style)
+                this.estilosPersonalizados[this.nombreCapaActual][estilo.id] = style
+            } else {
+                throw new Error(`No hay zona con id = ${estilo.id} en la capa ${ this.nombreCapaActual }`)
+            }
+        }
+    }
+
+    private getEstilo(id: number, capa: string): Style {
+        return id in this.estilosPersonalizados[capa]
+            ? this.estilosPersonalizados[capa][id]
+            : Estilos.POR_DEFECTO;
+    }
+
+    private aStyle(estiloZona: EstiloZona): Style {
+        const estilo = this.getEstilo(estiloZona.id, this.nombreCapaActual).clone();
+
+        if (!!estiloZona.relleno) {
+            estilo.setFill(new Fill({ color: hexToColor(estiloZona.relleno) }))
+        }
+
+        const ancho = !!estiloZona.bordeGrueso ? 4 : 2
+
+        if (!!estiloZona.borde) {
+            estilo.setStroke(new Stroke({ color: hexToColor(estiloZona.borde), width: ancho }));
+        } else {
+            estilo.setStroke(new Stroke({
+                color: Estilos.POR_DEFECTO.getFill().getColor(), width: ancho
+            }))
+        }
+        return estilo;
+    }
+
+    private buscarZona(id: number): Feature {
+        return this.capaActual
+            .getSource()
+            .getFeatures()
+            .find(d => d.get('id') === id);
+    }
+
+    private alMoverMouse(evento: MapBrowserEvent) {
         this.resaltarZonaBajoMouse(evento)
     }
 
     private resaltarZonaBajoMouse(evento: MapBrowserEvent) {
         if (this.elementoResaltado !== null) {
-            const estiloPersonalizado = this.getEstiloPersonalizado(this.elementoResaltado as Feature)
+            const estiloPersonalizado = this.getEstilo(Number(this.elementoResaltado.get('id')), this.nombreCapaActual)
+
             if (estiloPersonalizado) {
                 (this.elementoResaltado as Feature).setStyle(estiloPersonalizado)
             } else {
                 (this.elementoResaltado as Feature).setStyle(undefined)
             }
+
             this.elementoResaltado = null;
         }
 
         this.map.forEachFeatureAtPixel(evento.pixel, feature => {
-            //if agregado para evitar click sobre el entorno -- REEMPLAZAR cuando haya tiempo
+            //if agregado para evitar click sobre el entorno -- REEMPLAZAR por mascara (clipping) cuando haya tiempo
             if (feature.get('id') != '99999' && feature.getGeometry().getType() != 'Point') {
                 this.elementoResaltado = feature;
 
-                const estilo: Style = this.tieneEstiloPersonalizado(this.elementoResaltado as Feature)
-                    ? this.calcularEstiloResaltado(this.getEstiloPersonalizado(this.elementoResaltado as Feature))
+                const id = this.elementoResaltado.get('id');
+
+                const estiloPersonalizado = this.getEstilo(Number(id), this.nombreCapaActual);
+
+                const estilo: Style = !!estiloPersonalizado
+                    ? resaltar(estiloPersonalizado)
                     : Estilos.RESALTADO;
 
                 (this.elementoResaltado as Feature).setStyle(estilo)
@@ -253,7 +326,7 @@ export class Mapa {
     alHacerClick(evento: MapBrowserEvent) {
         this.map.forEachFeatureAtPixel(evento.pixel, seccionOdistrito => {
             console.log(seccionOdistrito.get('id'))
-            // If agregado para ignorar clicks sobre el entorno -- REEMPLAZAR cuando haya tiempo
+            // If agregado para ignorar clicks sobre el entorno -- QUITAR luego de aplicar mascara
             if (seccionOdistrito.get('id') != 99999) {
                 // Detectar si se hizo click en una seccion o en un distrito
                 if (seccionOdistrito.get('nombreSeccion')) {
@@ -626,28 +699,6 @@ export class Mapa {
         if (this.callbackAlEnfocar) {
             this.callbackAlEnfocar(new EventoEnfocar(nivel, feature));
         }
-    }
-
-    private calcularEstiloResaltado(estiloBase: Style): Style {
-        return resaltar(estiloBase)
-    }
-
-    private getEstiloPersonalizado(f: Feature): Style | undefined {
-        const estilosPersonalizados = f.get('nombreSeccion')
-            ? this.estilosPersonalizados.secciones
-            : this.estilosPersonalizados.distritos;
-        const id = f.get('id')
-        if (id in estilosPersonalizados) {
-            return estilosPersonalizados[id]
-        }
-    }
-
-    private tieneEstiloPersonalizado(f: Feature): boolean {
-        const estilos = f.get('nombreSeccion')
-            ? this.estilosPersonalizados.secciones
-            : this.estilosPersonalizados.distritos;
-
-        return f.get('id') in estilos;
     }
 
     //INICIO DE MANEJO DE ICONOS - MODIFICAR
