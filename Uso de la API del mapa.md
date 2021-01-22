@@ -6,7 +6,7 @@
 
 - alEnfocar
 
-## clickVisualizarCalles.ts
+## clickVisualizarCalles.ts (HECHO)
 
 - [mostrar | ocultar]Calles
 

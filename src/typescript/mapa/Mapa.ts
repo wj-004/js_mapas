@@ -66,11 +66,10 @@ export type Estado = {
      * Indica los IDs de las zonas ocultas. Si una zona esta oculta no se la
      * dibuja en el mapa. Las zonas son visibles por defecto.
      */
-    zonasOcultas: VisibilidadZona[]
+    zonasOcultas: number[]
 }
 
 type EstiloZona = { id: number, relleno?: string, borde?: string, bordeGrueso?: boolean }
-type VisibilidadZona = { id: number, visible: boolean }
 
 /**
  * Valor de la opcion "Todos" en el selector de seccion/distrito.
@@ -209,8 +208,8 @@ export class Mapa {
         this.establecerCapasVisibles(this.estado.capas);
         this.enfocarZona(this.estado.enfoque);
         this.pintarZonas(this.estado.estilos);
+        this.ocultarZona(this.estado.zonasOcultas);
         // this.mostrarPines(this.estado.capas);
-        // this.ocultarZona(this.estado.zonasOcultas);
 
         if (emitirEventos && this.estado.enfoque.length > 0) {
             this.llamarCallbackEnfocar();
@@ -224,7 +223,6 @@ export class Mapa {
      */
     private establecerCapasVisibles(nombresDeCapas: string[]) {
         this.map.getLayers().clear()
-        this.map.getLayers().push(this.entornoBsAs)
 
         for (let nombre of nombresDeCapas) {
             const capa = nombre == CAPA_OPEN_STREET_MAP
@@ -237,6 +235,8 @@ export class Mapa {
             this.map.getLayers().push(capa)
             this.capas[nombre] = capa
         }
+
+        this.map.getLayers().push(this.entornoBsAs)
 
         this.nombreCapaActual = nombresDeCapas[nombresDeCapas.length - 1]
     }
@@ -384,30 +384,30 @@ export class Mapa {
         }
     }
 
-    // /**
-    //  * Muestra las calles del distrito enfocado unicamente
-    //  */
-    // mostrarCallesEnZonaEnfocada() {
-    //     this.openStreetMap.setVisible(true)
+    /**
+     * Muestra las calles de la zona enfocada unicamente
+     */
+    mostrarCallesEnZonaEnfocada() {
+        this.setEstado({
+            zonasOcultas: this.estado.enfoque,
+            capas: [CAPA_OPEN_STREET_MAP, this.nombreCapaActual]
+        })
+    }
 
-    //     const elResto = this.todosLosDistritos.getSource()
-    //         .getFeatures()
-    //         .filter(f => f.get('id') !== this.distritoEnfocado.get('id'))
-    //         .map(z => Number(z.get('id')));
-
-    //     this.zonaEnfocada.getSource().clear()
-    //     this.zonaEnfocada.getSource().addFeatures(elResto)
-
-    //     this.map.getView().fit(this.distritoEnfocado.getGeometry().getExtent())
-    // }
-
+    /**
+     * Oculta las calles y solo muestra la zona enfocada
+     */
     ocultarCalles() {
-        this.openStreetMap.setVisible(false)
-
-        this.zonaEnfocada.getSource().clear()
-        this.zonaEnfocada.getSource().addFeature(this.distritoEnfocado)
-
-        this.map.getView().fit(this.distritoEnfocado.getGeometry().getExtent())
+        const elResto = this.capaActual
+            .getSource()
+            .getFeatures()
+            .filter(f => !this.estado.enfoque.includes(f.get('id')))
+            .map(z => Number(z.get('id')));
+        
+        this.setEstado({
+            zonasOcultas: elResto,
+            capas: [this.nombreCapaActual]
+        })
     }
 
     /**
