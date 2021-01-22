@@ -26,18 +26,51 @@ import * as Control from 'ol/control';
 import GeometryType from 'ol/geom/GeometryType';
 import { Coordinate } from 'ol/coordinate';
 import GeometryCollection from 'ol/geom/GeometryCollection';
+import Geometry from 'ol/geom/Geometry';
+import { GeoJSON } from 'ol/format'
 
 const extentBuenosAires = [...fromLonLat([-64, -42]), ...fromLonLat([-56, -32])] as Extent
 
-
+/**
+ * Describe el estado del mapa, lo que se ve en el.
+ */
 export type Estado = {
+    /**
+     * Indica que capas estan visibles. La ultima capa de este arreglo
+     * se considera la capa "actual", la capa superior.
+     */
     capas: string[],
+
+    /**
+     * Indica los pines visibles en el mapa.
+     */
     pines: string[],
-    zonaEnfocada: number[]
-    estilos: EstiloZona[]
+
+    /**
+     * Indica los IDs de las zonas (o zona) enfocadas. Si una zona esta
+     * enfocada la vista del mapa esta centrada en ella. Si hay mas de una
+     * zona que enfocar la vista del mapa estara en el centro de todas ellas.
+     * Si este arreglo esta vacio el mapa se centra sobre la capa actual
+     * entera.
+     */
+    enfoque: number[]
+
+    /**
+     * Indica el color de relleno, y el color y ancho del borde de zonas
+     * especificas. Cualquier zona que no este aqui tiene el color por
+     * defecto.
+     */
+    estilos: EstiloZona[],
+
+    /**
+     * Indica los IDs de las zonas ocultas. Si una zona esta oculta no se la
+     * dibuja en el mapa. Las zonas son visibles por defecto.
+     */
+    zonasOcultas: VisibilidadZona[]
 }
 
 type EstiloZona = { id: number, relleno?: string, borde?: string, bordeGrueso?: boolean }
+type VisibilidadZona = { id: number, visible: boolean }
 
 /**
  * Valor de la opcion "Todos" en el selector de seccion/distrito.
@@ -46,14 +79,14 @@ type EstiloZona = { id: number, relleno?: string, borde?: string, bordeGrueso?: 
  */
 const OPCION_TODOS = String(-1);
 
-const CAPA_OPEN_STREET_MAP = 'openStreetMap';
+const CAPA_OPEN_STREET_MAP = 'calles';
 
 export class Mapa {
 
     private map: Map;
 
-    private capas: { [nombre: string]: VectorLayer | TileLayer } = {}
-    estado: Estado = { capas: [], pines: [], zonaEnfocada: [], estilos: [] }
+    private capasDisponibles: { [nombre: string]: () => VectorLayer | TileLayer } = {}
+    estado: Estado = { capas: [], pines: [], enfoque: [], estilos: [], zonasOcultas: [] }
     historialDeEstado: Estado[] = [];
 
     /**
@@ -63,6 +96,7 @@ export class Mapa {
     get capaActual(): VectorLayer {
         return this.capas[this.nombreCapaActual] as VectorLayer;
     }
+    private capas: { [nombre: string]: TileLayer | VectorLayer } = {}
 
     // Capas del mapa
     private openStreetMap: TileLayer; // Se podria hacer un getter privado para esta capa y otras
@@ -80,6 +114,8 @@ export class Mapa {
     private _nivel: Nivel = Nivel.TODOS_LOS_DISTRITOS;
     get nivel(): Nivel { return this._nivel }
 
+    private entornoBsAs: VectorLayer;
+
     private callbackAlClickearCualquierDistrito: Funcion<number, void>;
     private callbackAlEnfocar: Funcion<Estado, void>;
 
@@ -90,38 +126,31 @@ export class Mapa {
     constructor(
         private contenedor: HTMLElement,
         private tagSelect: HTMLSelectElement,
-        private entornoBsAs: VectorLayer,
-        capas: { nombre: string, layer: VectorLayer }[],
+        zonaEntornoBsAs: Feature<Geometry>[],
+        capas: { nombre: string, zonas: Feature<Geometry>[] }[],
     ) {
         // Guardar capas
         for (let capa of capas) {
-            this.capas[capa.nombre] = capa.layer;
-            this.estilosPersonalizados[capa.nombre] = {}
-            capa.layer.setStyle(Estilos.POR_DEFECTO);
-            capa.layer.setVisible(false);
+            this.capasDisponibles[capa.nombre] = () => new VectorLayer({
+                source: new VectorSource({ features: capa.zonas, format: new GeoJSON() })
+            });
         }
 
-        // Cargar mapa de OpenStreetMap
-        this.capas['openStreetMap'] = new TileLayer({
-            source: new OSM({ attributions: [] })
-        })
-        this.capas['openStreetMap'].setVisible(false)
+        this.capasDisponibles[CAPA_OPEN_STREET_MAP] = () => {
+            return new TileLayer({
+                source: new OSM({ attributions: [] })
+            })
+        }
 
-        // Inicializar capas especiales
-        this.zonaEnfocada = new VectorLayer({ source: new VectorSource() });
-        this.zonaEnfocada.setStyle(Estilos.POR_DEFECTO)
-        this.iconos = new VectorLayer({ source: new VectorSource() });
+        this.entornoBsAs = new VectorLayer({ source: new VectorSource({
+            features: zonaEntornoBsAs, format: new GeoJSON()
+        }) })
         this.entornoBsAs.setStyle(Estilos.ENTORNO)
 
         // Mostrar mapa
         this.map = new Map({
             target: this.contenedor,
-            layers: [
-                ...Object.values(this.capas),
-                this.zonaEnfocada,
-                this.entornoBsAs,
-                this.iconos
-            ],
+            layers: [],
             view: new View({
                 center: fromLonLat([-60, -37.3]),
                 zoom: 0,
@@ -177,46 +206,39 @@ export class Mapa {
     setEstado(estado: Partial<Estado>, emitirEventos = true) {
         this.historialDeEstado.push(this.estado);
         this.estado = { ...this.estado, ...estado }
+        this.establecerCapasVisibles(this.estado.capas);
+        this.enfocarZona(this.estado.enfoque);
+        this.pintarZonas(this.estado.estilos);
+        // this.mostrarPines(this.estado.capas);
+        // this.ocultarZona(this.estado.zonasOcultas);
 
-        if (estado.capas) {
-            this.mostrarUOcultarCapas(estado.capas);
+        if (emitirEventos && this.estado.enfoque.length > 0) {
+            this.llamarCallbackEnfocar();
         }
-
-        if (estado.zonaEnfocada) {
-            this.enfocarZona(estado.zonaEnfocada);
-            if (emitirEventos) {
-                this.llamarCallbackEnfocar();
-            }
-        }
-
-        if (estado.estilos) {
-            this.pintarZonas(estado.estilos);
-        }
-
-        // if (estado.pines) {
-        //     this.mostrarPines(estado.capas);
-        // }
     }
 
     /**
      * Toma una lista de capas y hace que solo esas sean visibles.
      * 
-     * @param capasQueMostrar lista de capas que deben hacerse/permanecer visibles
+     * @param nombresDeCapas lista de capas que deben hacerse/permanecer visibles
      */
-    private mostrarUOcultarCapas(capasQueMostrar: string[]) {
-        for (let nombre of capasQueMostrar) {
-            this.capas[nombre].setVisible(true)
-        }
-        this.nombreCapaActual = capasQueMostrar[capasQueMostrar.length - 1];
-        
-        const capasQueOcultar = Object.keys(this.capas)
-            .filter(nombreCapa => !capasQueMostrar.includes(nombreCapa))
+    private establecerCapasVisibles(nombresDeCapas: string[]) {
+        this.map.getLayers().clear()
+        this.map.getLayers().push(this.entornoBsAs)
 
-        if (capasQueOcultar.length > 0) {
-            for (let nombre of capasQueOcultar) {
-                this.capas[nombre].setVisible(false)
+        for (let nombre of nombresDeCapas) {
+            const capa = nombre == CAPA_OPEN_STREET_MAP
+                ? new TileLayer({ source: new OSM({ attributions: [] }) })
+                : this.capasDisponibles[nombre]();
+            if (capa instanceof VectorLayer) {
+                capa.setStyle(Estilos.POR_DEFECTO)
             }
+            this.estilosPersonalizados[nombre] = {}
+            this.map.getLayers().push(capa)
+            this.capas[nombre] = capa
         }
+
+        this.nombreCapaActual = nombresDeCapas[nombresDeCapas.length - 1]
     }
 
     private enfocarZona(ids: number[]) {
@@ -228,30 +250,26 @@ export class Mapa {
         
             const coleccion = new GeometryCollection(porciones.map(z => z.getGeometry()))
             this.map.getView().fit(coleccion.getExtent())
-
-            this.zonaEnfocada.getSource().clear()
-            this.zonaEnfocada.getSource().addFeatures(porciones);
-            this.zonaEnfocada.setVisible(true)
-
-            for (let capa of Object.values(this.capas)) {
-                capa.setVisible(false)
-            }
         } else {
-            this.zonaEnfocada.setVisible(false);
-            this.mostrarUOcultarCapas(this.estado.capas)
             this.map.getView().fit(this.capaActual.getSource().getExtent())
+        }
+    }
+
+    private ocultarZona(ids: number[]) {
+        const zonas = this.capaActual.getSource();
+        for (let id of ids) {
+            const zona = this.encontrarZona(id);
+            zonas.removeFeature(zona);
         }
     }
 
     private pintarZonas(estilos: EstiloZona[]) {
         for (let estilo of estilos) {
             const style = this.aStyle(estilo);
-            const zona = this.buscarZona(estilo.id);
+            const zona = this.encontrarZona(estilo.id);
             if (zona && (!!estilo.relleno || !!estilo.borde)) {
                 zona.setStyle(style)
                 this.estilosPersonalizados[this.nombreCapaActual][estilo.id] = style
-            } else {
-                throw new Error(`No hay zona con id = ${estilo.id} en la capa ${ this.nombreCapaActual }`)
             }
         }
     }
@@ -281,11 +299,17 @@ export class Mapa {
         return estilo;
     }
 
-    private buscarZona(id: number): Feature {
-        return this.capaActual
+    private encontrarZona(id: number): Feature {
+        const zona = this.capaActual
             .getSource()
             .getFeatures()
             .find(d => d.get('id') === id);
+        
+        if (zona) {
+            return zona
+        } else {
+            throw new Error(`No hay zona con id = ${id} en la capa ${ this.nombreCapaActual }`)
+        }
     }
 
     private alMoverMouse(evento: MapBrowserEvent) {
@@ -360,21 +384,22 @@ export class Mapa {
         }
     }
 
-    /**
-     * Muestra las calles del distrito enfocado unicamente
-     */
-    mostrarCalles() {
-        this.openStreetMap.setVisible(true)
+    // /**
+    //  * Muestra las calles del distrito enfocado unicamente
+    //  */
+    // mostrarCallesEnZonaEnfocada() {
+    //     this.openStreetMap.setVisible(true)
 
-        const elResto = this.todosLosDistritos.getSource()
-            .getFeatures()
-            .filter(f => f.get('id') !== this.distritoEnfocado.get('id'))
+    //     const elResto = this.todosLosDistritos.getSource()
+    //         .getFeatures()
+    //         .filter(f => f.get('id') !== this.distritoEnfocado.get('id'))
+    //         .map(z => Number(z.get('id')));
 
-        this.zonaEnfocada.getSource().clear()
-        this.zonaEnfocada.getSource().addFeatures(elResto)
+    //     this.zonaEnfocada.getSource().clear()
+    //     this.zonaEnfocada.getSource().addFeatures(elResto)
 
-        this.map.getView().fit(this.distritoEnfocado.getGeometry().getExtent())
-    }
+    //     this.map.getView().fit(this.distritoEnfocado.getGeometry().getExtent())
+    // }
 
     ocultarCalles() {
         this.openStreetMap.setVisible(false)

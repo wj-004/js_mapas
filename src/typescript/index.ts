@@ -5,14 +5,14 @@ import { configurarListenersDelMapa } from "./app/mapa/configurarListenersDelMap
 import { enfocarZonaGuardada } from "./app/mapa/enfocarFeatureGuardado";
 import { configurarListenersDelNavegador } from "./app/navegador/configurarListenersDelNavegador";
 import { Mapa } from "./mapa/Mapa";
-import { getLayers } from "./util/getLayer";
+import { descargarZonas } from "./util/descargarZona";
 import { livewireEmit } from "./util/livewireEmit";
 
 window.onload = inicializar
 
 async function inicializar() {
     // Esperar que se descarguen los datos para el mapa
-    const capas = await getLayers([
+    const zonas = await descargarZonas([
         '../data/vector_data/bsas_provincia_distritos.geojson',
         '../data/vector_data/bsas_provincia_secciones.geojson',
         '../data/vector_data/contorno_relleno.geojson'
@@ -24,12 +24,14 @@ async function inicializar() {
     const mapa = new Mapa(
         document.querySelector("#map"),
         document.querySelector("#idSecciones"),
-        capas[2],
+        zonas[2],
         [
-            { nombre: 'municipios', layer: capas[0] },
-            { nombre: 'secciones', layer: capas[1] }
+            { nombre: 'municipios', zonas: zonas[0] },
+            { nombre: 'secciones', zonas: zonas[1] }
         ]
     )
+
+    window['mapa'] = mapa;
 
     mapa.setEstado({ capas: ['municipios'] })
     
@@ -37,8 +39,6 @@ async function inicializar() {
     configurarElementosDeInterfaz(mapa)
     configurarListenersDelNavegador(mapa)
     enfocarZonaGuardada(mapa)
-
-    window['mapa'] = mapa;
 
     livewireEmit('mapaListo');
 }
