@@ -67,6 +67,11 @@ export type Estado = {
      * dibuja en el mapa. Las zonas son visibles por defecto.
      */
     zonasOcultas: number[]
+
+    /**
+     * Indica si el usuario tiene permitido hacer click en una zona. Verdadero por defecto.
+     */
+    clickHabilitado: boolean
 }
 
 type EstiloZona = { id: number, relleno?: string, borde?: string, bordeGrueso?: boolean }
@@ -85,7 +90,7 @@ export class Mapa {
     private map: Map;
 
     private capasDisponibles: { [nombre: string]: () => VectorLayer | TileLayer } = {}
-    estado: Estado = { capas: [], pines: [], enfoque: [], estilos: [], zonasOcultas: [] }
+    estado: Estado = { capas: [], pines: [], enfoque: [], estilos: [], zonasOcultas: [], clickHabilitado: true }
     historialDeEstado: Estado[] = [];
 
     /**
@@ -111,7 +116,6 @@ export class Mapa {
     private elementoResaltado: FeatureLike = null;
 
     private _nivel: Nivel = Nivel.TODOS_LOS_DISTRITOS;
-    get nivel(): Nivel { return this._nivel }
 
     private entornoBsAs: VectorLayer;
 
@@ -205,6 +209,7 @@ export class Mapa {
     setEstado(estado: Partial<Estado>, emitirEventos = true) {
         this.historialDeEstado.push(this.estado);
         this.estado = { ...this.estado, ...estado }
+        this.estado = this.mutarEstado(this.estado);
         this.establecerCapasVisibles(this.estado.capas);
         this.enfocarZona(this.estado.enfoque);
         this.pintarZonas(this.estado.estilos);
@@ -214,6 +219,21 @@ export class Mapa {
         if (emitirEventos && this.estado.enfoque.length > 0) {
             this.llamarCallbackEnfocar();
         }
+    }
+
+    /**
+     * Este metodo se encarga de establecer el valor de propiedades del estado que dependen
+     * de otras propiedades del estado.
+     * @param estado 
+     */
+    private mutarEstado(estado: Estado) {
+        /**
+         * Cuando hay alguna seccion enfocada el click debe deshabilitarse para impedir
+         * que se enfoque otra zona sin antes quitarle el foco a las ya enfocadas.
+         */
+        const clickHabilitado = !(estado.enfoque.length > 0)
+        
+        return { ...estado, clickHabilitado }
     }
 
     /**
@@ -349,26 +369,25 @@ export class Mapa {
     }
 
     alHacerClick(evento: MapBrowserEvent) {
-        this.map.forEachFeatureAtPixel(evento.pixel, seccionOdistrito => {
-            console.log(seccionOdistrito.get('id'))
-            // If agregado para ignorar clicks sobre el entorno -- QUITAR luego de aplicar mascara
-            if (seccionOdistrito.get('id') != 99999) {
-                // Detectar si se hizo click en una seccion o en un distrito
-                if (seccionOdistrito.get('nombreSeccion')) {
-                    this.alClickearSeccion(seccionOdistrito as Feature)
-                } else {
-                    // PARCHE: evitar clicks a otros distritos cuando ya hay uno enfocado
-                    if (this.nivel !== Nivel.UN_DISTRITO) {
+        if (this.estado.clickHabilitado) {
+            this.map.forEachFeatureAtPixel(evento.pixel, seccionOdistrito => {
+                // If agregado para ignorar clicks sobre el entorno -- QUITAR luego de aplicar mascara
+                if (seccionOdistrito.get('id') != 99999) {
+
+                    // Detectar si se hizo click en una seccion o en un distrito
+                    if (seccionOdistrito.get('nombreSeccion')) {
+                        this.alClickearSeccion(seccionOdistrito as Feature)
+                    } else {
                         this.alClickearDistrito(seccionOdistrito as Feature)
                     }
                 }
-            }
-        })
+            })
+        }
     }
 
     private alClickearSeccion(seccion: Feature) {
-        this._nivel = Nivel.UNA_SECCION
-        this.enfocarSeccion(seccion)
+        const id = Number(seccion.get('id'));
+        this.setEstado({ enfoque: [ id ] })
     }
 
     private enfocarFeature(feature: Feature) {
@@ -376,12 +395,9 @@ export class Mapa {
     }
 
     private alClickearDistrito(distrito: Feature) {
-        this._nivel = Nivel.UN_DISTRITO
-        this.ocultarDistritos()
-        this.enfocarDistrito(distrito)
-        if (this.callbackAlClickearCualquierDistrito) {
-            this.callbackAlClickearCualquierDistrito(distrito.get('id'))
-        }
+        const id = Number(distrito.get('id'));
+        this.setEstado({ enfoque: [ id ] })
+        this.llamarCallbackClickEnDistrito(id)
     }
 
     /**
@@ -615,6 +631,12 @@ export class Mapa {
     private llamarCallbackEnfocar() {
         if (this.callbackAlEnfocar) {
             this.callbackAlEnfocar(this.estado);
+        }
+    }
+
+    private llamarCallbackClickEnDistrito(id: number) {
+        if (this.callbackAlClickearCualquierDistrito) {
+            this.callbackAlClickearCualquierDistrito(id);
         }
     }
 
