@@ -1,33 +1,28 @@
-import { Feature, Map, MapBrowserEvent, View } from 'ol'
-import { fromLonLat } from 'ol/proj';
-import OSM from 'ol/source/OSM'
-import FullScreenControl from 'ol/control/FullScreen'
-import TileLayer from 'ol/layer/Tile'
-import { seccionToNombre } from '../util/seccionToNombre';
-import { distritoToNombre } from '../util/distritoToNombre';
-import { Funcion } from '../util/Funcion';
-import * as Estilos from './Estilos'
-import VectorLayer from 'ol/layer/Vector';
-import { FeatureLike } from 'ol/Feature';
-import { DistritosPorIdSeccion } from '../data/DistritosPorSeccion'
-import { Extent } from 'ol/extent';
-import VectorSource from 'ol/source/Vector';
-import { Nivel } from './Nivel'
-import { Style, Icon } from 'ol/style';
-import Fill from 'ol/style/Fill';
-import Stroke from 'ol/style/Stroke';
-import { resaltar } from './estilo/resaltar';
-import { hexToColor } from './estilo/hexToColor';
 import { aTitulo } from '../util/aTitulo';
-import Point from 'ol/geom/Point';
-import { getPinPath } from '../util/getPinPath';
-import * as Interacciones from 'ol/interaction';
-import * as Control from 'ol/control';
-import GeometryType from 'ol/geom/GeometryType';
-import { Coordinate } from 'ol/coordinate';
-import GeometryCollection from 'ol/geom/GeometryCollection';
-import Geometry from 'ol/geom/Geometry';
+import { distritoToNombre } from '../util/distritoToNombre';
+import { Extent } from 'ol/extent';
+import { Feature, Map, MapBrowserEvent, View } from 'ol'
+import { FeatureLike } from 'ol/Feature';
+import { fromLonLat } from 'ol/proj';
+import { Funcion } from '../util/Funcion';
 import { GeoJSON } from 'ol/format'
+import { hexToColor } from './estilo/hexToColor';
+import { resaltar } from './estilo/resaltar';
+import { seccionToNombre } from '../util/seccionToNombre';
+import { Style, Icon } from 'ol/style';
+import * as Control from 'ol/control';
+import * as Estilos from './Estilos'
+import * as Interacciones from 'ol/interaction';
+import Fill from 'ol/style/Fill';
+import FullScreenControl from 'ol/control/FullScreen'
+import Geometry from 'ol/geom/Geometry';
+import GeometryCollection from 'ol/geom/GeometryCollection';
+import OSM from 'ol/source/OSM'
+import Point from 'ol/geom/Point';
+import Stroke from 'ol/style/Stroke';
+import TileLayer from 'ol/layer/Tile'
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
 
 const extentBuenosAires = [...fromLonLat([-64, -42]), ...fromLonLat([-56, -32])] as Extent
 
@@ -102,20 +97,9 @@ export class Mapa {
     }
     private capas: { [nombre: string]: TileLayer | VectorLayer } = {}
 
-    // Capas del mapa
-    private openStreetMap: TileLayer; // Se podria hacer un getter privado para esta capa y otras
-
-    private zonaEnfocada: VectorLayer;      
     private iconos: VectorLayer;
 
-    private todosLosDistritos: VectorLayer; // OBSOLETA
-    private secciones: VectorLayer;         // OBSOLETA
-    private todosLosIconos: VectorLayer;    // OBSOLETA
-    private distritoEnfocado: Feature;      // OBSOLETA
-
     private elementoResaltado: FeatureLike = null;
-
-    private _nivel: Nivel = Nivel.TODOS_LOS_DISTRITOS;
 
     private entornoBsAs: VectorLayer;
 
@@ -395,10 +379,6 @@ export class Mapa {
         this.setEstado({ enfoque: [ id ], zonasOcultas: elResto })
     }
 
-    private enfocarFeature(feature: Feature) {
-        this.map.getView().fit(feature.getGeometry().getExtent())
-    }
-
     private alClickearDistrito(distrito: Feature) {
         const id = Number(distrito.get('id'));
 
@@ -437,48 +417,6 @@ export class Mapa {
             zonasOcultas: elResto,
             capas: [this.nombreCapaActual]
         })
-    }
-
-    /**
-     * PARCHE: Esto solo pone a open street map en visible = false.
-     * 
-     * Es un workaround porque no se puede usar el metodo ocultarCalles, ya que el mismo ahora
-     * hace MAS que solo ocultarlas...
-     */
-    soloOcultarCapaOpenStreetMap() {
-        this.openStreetMap.setVisible(false)
-    }
-
-    mostrarDistritos() {
-        this.todosLosDistritos.setVisible(true)
-    }
-
-    ocultarDistritos() {
-        this.todosLosDistritos.setVisible(false)
-    }
-
-    ocultarDistritosEnfocados() {
-        this.zonaEnfocada.setVisible(false)
-    }
-
-    mostrarSecciones() {
-        this.secciones.setVisible(true)
-    }
-
-    ocultarSecciones() {
-        this.secciones.setVisible(false)
-    }
-
-    mostrarEntornoBsAs() {
-        this.entornoBsAs.setVisible(true)
-    }
-
-    mostrarIconosEnMapa() {
-        this.todosLosIconos.setVisible(true)
-    }
-
-    ocultarIconosEnMapa() {
-        this.todosLosIconos.setVisible(false)
     }
 
     enfocarMunicipios() {
@@ -520,87 +458,6 @@ export class Mapa {
         this.tagSelect.value = OPCION_TODOS
     }
 
-    enfocarBuenosAires() {
-        this.map.getView().fit(extentBuenosAires)
-        this.establecerInteraccion(Interacciones.DragPan, false)
-    }
-
-    ponerNivelEnTodosLosDistritos() {
-        this._nivel = Nivel.TODOS_LOS_DISTRITOS
-    }
-
-    enfocarSeccionPorId(id: number) {
-        const seccion = this.secciones
-            .getSource()
-            .getFeatures()
-            .find(s => s.get('id') === id)
-
-        if (seccion) {
-            this.enfocarSeccion(seccion)
-        } else {
-            throw new Error(`No hay seccion con id = ${id}`)
-        }
-    }
-
-    /**
-     * Restablece el estilo de todos los distritos al valor por defecto
-     */
-    restablecerEstiloDeDistritos() {
-        for (let distrito of this.todosLosDistritos.getSource().getFeatures()) {
-            distrito.setStyle(Estilos.POR_DEFECTO);
-        }
-        this.estilosPersonalizados = { ...this.estilosPersonalizados, distritos: {} };
-    }
-
-    private enfocarDistrito(distrito: Feature) {
-        this._nivel = Nivel.UN_DISTRITO
-
-        this.enfocarFeature(distrito)
-
-        this.distritoEnfocado = distrito
-        this.ocultarSecciones()
-        this.zonaEnfocada.getSource().clear()
-        this.zonaEnfocada.getSource().addFeatures([distrito])
-        this.zonaEnfocada.setVisible(true)
-        this.soloMostrarPinesDeZona([distrito]);
-
-        this.tagSelect.value = String(distrito.get('id'))
-        this.establecerInteraccion(Interacciones.MouseWheelZoom, true)
-        this.establecerInteraccion(Interacciones.DragPan, true)
-    }
-
-    private enfocarSeccion(seccion: Feature) {
-        this._nivel = Nivel.UNA_SECCION
-
-        this.enfocarFeature(seccion)
-        const seccionId: number = seccion.get('id');
-
-        this.secciones.setVisible(false)
-        this.todosLosDistritos.setVisible(false)
-
-        // Mostrar (solo?) los distritos de la seccion
-        const idDistritos: number[] = DistritosPorIdSeccion[seccionId]
-        const distritosQueEnfocar = this.todosLosDistritos
-            .getSource()
-            .getFeatures()
-            .filter(feature => idDistritos.includes(feature.get('id')))
-
-        this.zonaEnfocada.getSource().clear()
-        this.zonaEnfocada.getSource().addFeatures(distritosQueEnfocar)
-        this.zonaEnfocada.setVisible(true)
-
-        this.soloMostrarPinesDeZona(distritosQueEnfocar)
-
-        this.listarOpcionesEnSelect(
-            distritosQueEnfocar,
-            distritoToNombre
-        )
-
-        this.tagSelect.value = OPCION_TODOS;
-        this.establecerInteraccion(Interacciones.MouseWheelZoom, true)
-        this.establecerInteraccion(Interacciones.DragPan, true)
-    }
-
     private listarOpcionesEnSelect(features: Feature[], extraerNombre: Funcion<Feature, string>) {
         const opciones = features
             .map(feature => ({ nombre: extraerNombre(feature), valor: feature.get('id') }))
@@ -624,19 +481,6 @@ export class Mapa {
         return opt
     }
 
-    private mostrarDistritoEnSelect(id: number) {
-        this.listarOpcionesEnSelect(
-            this.todosLosDistritos.getSource().getFeatures(),
-            distritoToNombre
-        )
-
-        this.tagSelect.value = String(id)
-    }
-
-    alClickerUnDistrito(id: number, callback) {
-        throw new Error(`Aun no esta implementado!`)
-    }
-
     alClickearCualquierDistrito(callback: Funcion<number, void>) {
         this.callbackAlClickearCualquierDistrito = callback
     }
@@ -657,102 +501,102 @@ export class Mapa {
         }
     }
 
-    //INICIO DE MANEJO DE ICONOS - MODIFICAR
-    public deleteIconFeatures() {
-        if (!!this.todosLosIconos && !!this.todosLosIconos.getSource()) {
-            const iconos = this.todosLosIconos.getSource();
-            iconos.getFeatures().forEach(function (feature) {
-                if (feature.getGeometry().getType() === 'Point') {
-                    iconos.removeFeature(feature);
-                }
-            });
-        }
-    }
+    // //INICIO DE MANEJO DE ICONOS - MODIFICAR
+    // public deleteIconFeatures() {
+    //     if (!!this.todosLosIconos && !!this.todosLosIconos.getSource()) {
+    //         const iconos = this.todosLosIconos.getSource();
+    //         iconos.getFeatures().forEach(function (feature) {
+    //             if (feature.getGeometry().getType() === 'Point') {
+    //                 iconos.removeFeature(feature);
+    //             }
+    //         });
+    //     }
+    // }
 
-    mostrarTodosLosIconos() {
-        this.iconos.setVisible(false)
-        this.todosLosIconos.setVisible(true)
-    }
+    // mostrarTodosLosIconos() {
+    //     this.iconos.setVisible(false)
+    //     this.todosLosIconos.setVisible(true)
+    // }
 
-    /**
-     * Muestra SOLO los pines contenidos en una zona particular
-     */
-    private soloMostrarPinesDeZona(zona: Feature[]) {
-        const iconos = this.todosLosIconos
-            .getSource().getFeatures()
+    // /**
+    //  * Muestra SOLO los pines contenidos en una zona particular
+    //  */
+    // private soloMostrarPinesDeZona(zona: Feature[]) {
+    //     const iconos = this.todosLosIconos
+    //         .getSource().getFeatures()
 
-            // Dejar solo los iconos validos. Por algun motivo hay iconos que tienen una (o dos) coordenadas NaN.
-            .filter(i => this.tieneCoordenadasValidas(i))
+    //         // Dejar solo los iconos validos. Por algun motivo hay iconos que tienen una (o dos) coordenadas NaN.
+    //         .filter(i => this.tieneCoordenadasValidas(i))
             
-            // Tomar todos los que estan DENTRO de la zona dada
-            .filter(i => {
-                const coords = (i.getGeometry() as Point).getCoordinates()
-                return zona.some(z => this.zonaContieneCoord(z, coords))
-            })
+    //         // Tomar todos los que estan DENTRO de la zona dada
+    //         .filter(i => {
+    //             const coords = (i.getGeometry() as Point).getCoordinates()
+    //             return zona.some(z => this.zonaContieneCoord(z, coords))
+    //         })
         
-        this.iconos.getSource().clear();
-        this.iconos.getSource().addFeatures(iconos)
-        this.todosLosIconos.setVisible(false);
-        this.iconos.setVisible(true);
-    }
+    //     this.iconos.getSource().clear();
+    //     this.iconos.getSource().addFeatures(iconos)
+    //     this.todosLosIconos.setVisible(false);
+    //     this.iconos.setVisible(true);
+    // }
 
-    private tieneCoordenadasValidas(icono: Feature): boolean {
-        return icono.getGeometry().getType() === GeometryType.POINT
-            && !isNaN((icono.getGeometry() as Point).getCoordinates()[0])
-            && !isNaN((icono.getGeometry() as Point).getCoordinates()[1])
-    }
+    // private tieneCoordenadasValidas(icono: Feature): boolean {
+    //     return icono.getGeometry().getType() === GeometryType.POINT
+    //         && !isNaN((icono.getGeometry() as Point).getCoordinates()[0])
+    //         && !isNaN((icono.getGeometry() as Point).getCoordinates()[1])
+    // }
 
-    private zonaContieneCoord(zona: Feature, coord: Coordinate): boolean {
-        return zona.getGeometry().intersectsCoordinate(coord)
-    }
+    // private zonaContieneCoord(zona: Feature, coord: Coordinate): boolean {
+    //     return zona.getGeometry().intersectsCoordinate(coord)
+    // }
 
-    public mostrarPinesEntidadesJudiciales(nombre, entidad, lonLatAtArray) {
-        if (typeof entidad !== 'string') {
-            console.debug('addIconToFeature: tipo es distinto de string')
-        }
-        var iconoPath = "../../../" + getPinPath('TRIBUNALES', entidad);
+    // public mostrarPinesEntidadesJudiciales(nombre, entidad, lonLatAtArray) {
+    //     if (typeof entidad !== 'string') {
+    //         console.debug('addIconToFeature: tipo es distinto de string')
+    //     }
+    //     var iconoPath = "../../../" + getPinPath('TRIBUNALES', entidad);
 
-        this.todosLosIconos.getSource().addFeature(
-            this.crearIconFeature(nombre, iconoPath, lonLatAtArray)
-        );
-        return true;
-    }
+    //     this.todosLosIconos.getSource().addFeature(
+    //         this.crearIconFeature(nombre, iconoPath, lonLatAtArray)
+    //     );
+    //     return true;
+    // }
 
-    public agregarPin(pos: { coords?: Coordinate, longLat?: [number, number] }) {
-        if (!pos.coords && !pos.longLat) {
-            throw new Error(`El pin no tienen ninguna posicion!! Pasale coords o longLat, cabeza`)
-        }
+    // public agregarPin(pos: { coords?: Coordinate, longLat?: [number, number] }) {
+    //     if (!pos.coords && !pos.longLat) {
+    //         throw new Error(`El pin no tienen ninguna posicion!! Pasale coords o longLat, cabeza`)
+    //     }
 
-        const position = pos.coords ?? pos.longLat
+    //     const position = pos.coords ?? pos.longLat
 
-        const icono = new Feature({geometry: new Point(position)})
-        const estilo = new Style({
-            image: new Icon({ anchor: [0.5, 1], scale: 0.7, src: "../../../" + getPinPath('TRIBUNALES', "PENAL") })
-        })
-        icono.setStyle(estilo);
+    //     const icono = new Feature({geometry: new Point(position)})
+    //     const estilo = new Style({
+    //         image: new Icon({ anchor: [0.5, 1], scale: 0.7, src: "../../../" + getPinPath('TRIBUNALES', "PENAL") })
+    //     })
+    //     icono.setStyle(estilo);
 
-        this.todosLosIconos.getSource().addFeature(icono)
-    }
+    //     this.todosLosIconos.getSource().addFeature(icono)
+    // }
 
-    private crearIconFeature(entityName, Iconopath, latLonAsArray) {
-        var iconFeature = new Feature({
-            geometry: new Point(fromLonLat(latLonAsArray)),
-            name: entityName ?? ''
-        });
+    // private crearIconFeature(entityName, Iconopath, latLonAsArray) {
+    //     var iconFeature = new Feature({
+    //         geometry: new Point(fromLonLat(latLonAsArray)),
+    //         name: entityName ?? ''
+    //     });
 
-        try {
-            iconFeature.setStyle(new Style({
-                image: new Icon({
-                    anchor: [0.5, 1],
-                    src: Iconopath,
-                    scale: 0.7,
-                })
-            }));
-        } catch (e) {
-            console.error("Error crearIconFeature function: " + e);
-        }
-        return iconFeature;
-    }
+    //     try {
+    //         iconFeature.setStyle(new Style({
+    //             image: new Icon({
+    //                 anchor: [0.5, 1],
+    //                 src: Iconopath,
+    //                 scale: 0.7,
+    //             })
+    //         }));
+    //     } catch (e) {
+    //         console.error("Error crearIconFeature function: " + e);
+    //     }
+    //     return iconFeature;
+    // }
 
     establecerInteraccion(interaccion, habilitar = true) {
         this.map.getInteractions().forEach(function (e) {

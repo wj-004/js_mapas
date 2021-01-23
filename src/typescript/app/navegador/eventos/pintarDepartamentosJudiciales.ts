@@ -14,8 +14,6 @@ export function pintarDepartamentosJudiciales(mapa: Mapa) {
         const distritos = (evento as Evento).detail.data
         const distritosPorSeccion = agrupar(distritos, d => d.seccion_id)
 
-        mapa.restablecerEstiloDeDistritos();
-
         for (let grupoId in distritosPorSeccion) {
             const color = unColor();
             const estiloMunicipios = distritosPorSeccion[grupoId]

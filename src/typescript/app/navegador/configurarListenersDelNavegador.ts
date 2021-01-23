@@ -19,7 +19,7 @@ export function escucharEventosDeLivewire(mapa: Mapa) {
 
     window.addEventListener('pintarDepartamentosJudiciales', pintarDepartamentosJudiciales(mapa));
 
-    window.addEventListener('show-map', showMapa(mapa))
+    window.addEventListener('clickEnLaLupita', showMapa(mapa))
 
     window.addEventListener('limpiarStorage', limpiarStorage)
 

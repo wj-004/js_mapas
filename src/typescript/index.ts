@@ -41,4 +41,5 @@ async function inicializar() {
     enfocarZonaGuardada(mapa)
 
     livewireEmit('mapaListo');
+    dispatchEvent(new CustomEvent('mapaListo', { detail: mapa }));
 }
