@@ -232,7 +232,7 @@ export class Mapa {
          * que se enfoque otra zona sin antes quitarle el foco a las ya enfocadas.
          */
         const clickHabilitado = !(estado.enfoque.length > 0)
-        
+
         return { ...estado, clickHabilitado }
     }
 
@@ -388,6 +388,11 @@ export class Mapa {
     private alClickearSeccion(seccion: Feature) {
         const id = Number(seccion.get('id'));
         this.setEstado({ enfoque: [ id ] })
+        
+        const elResto = this.zonasMenosIds([id])
+            .map(z => Number(z.get('id')));
+
+        this.setEstado({ enfoque: [ id ], zonasOcultas: elResto })
     }
 
     private enfocarFeature(feature: Feature) {
@@ -396,8 +401,19 @@ export class Mapa {
 
     private alClickearDistrito(distrito: Feature) {
         const id = Number(distrito.get('id'));
-        this.setEstado({ enfoque: [ id ] })
+
+        const elResto = this.zonasMenosIds([id])
+            .map(z => Number(z.get('id')));
+
+        this.setEstado({ enfoque: [ id ], zonasOcultas: elResto })
         this.llamarCallbackClickEnDistrito(id)
+    }
+
+    private zonasMenosIds(ids: number[]) {
+        return this.capaActual
+            .getSource()
+            .getFeatures()
+            .filter(f => !ids.includes(f.get('id')))
     }
 
     /**
@@ -414,11 +430,8 @@ export class Mapa {
      * Oculta las calles y solo muestra la zona enfocada
      */
     ocultarCalles() {
-        const elResto = this.capaActual
-            .getSource()
-            .getFeatures()
-            .filter(f => !this.estado.enfoque.includes(f.get('id')))
-            .map(z => Number(z.get('id')));
+        const elResto = this.zonasMenosIds(this.estado.enfoque)
+        .map(z => Number(z.get('id')));
         
         this.setEstado({
             zonasOcultas: elResto,
@@ -470,7 +483,9 @@ export class Mapa {
 
     enfocarMunicipios() {
         this.setEstado({
-            capas: [ 'municipios' ]
+            capas: [ 'municipios' ],
+            enfoque: [],
+            zonasOcultas: []
         })
 
         // TO DO: Las interacciones deberian ser parte del estado
@@ -488,7 +503,9 @@ export class Mapa {
 
     enfocarSecciones() {
         this.setEstado({
-            capas: [ 'secciones' ]
+            capas: [ 'secciones' ],
+            enfoque: [],
+            zonasOcultas: []
         })
 
         // TO DO: Las interacciones deberian ser parte del estado
