@@ -452,50 +452,39 @@ export class Mapa {
         this.todosLosIconos.setVisible(false)
     }
 
-    enfocarDistritos() {
-        this._nivel = Nivel.TODOS_LOS_DISTRITOS
+    enfocarMunicipios() {
+        this.setEstado({
+            capas: [ 'municipios' ]
+        })
 
-        this.openStreetMap.setVisible(false)
-
-        // Mostrar TODOS los pines que haya
-        this.todosLosIconos.setVisible(true)
-        this.iconos.setVisible(false)
-
-        this.ocultarSecciones()
-        this.ocultarDistritosEnfocados()
-        this.mostrarDistritos()
-        this.enfocarBuenosAires()
-
-        this.listarOpcionesEnSelect(
-            this.todosLosDistritos.getSource().getFeatures(),
-            distritoToNombre
-        )
-
-        this.tagSelect.value = OPCION_TODOS
+        // TO DO: Las interacciones deberian ser parte del estado
         this.establecerInteraccion(Interacciones.MouseWheelZoom, true)
         this.establecerInteraccion(Interacciones.DragPan, true)
+
+        // TO DO: Esto no deberia ir aqui. En un evento tal vez.
+        this.listarOpcionesEnSelect(
+            this.capaActual.getSource().getFeatures(),
+            distritoToNombre
+        )
+        this.tagSelect.value = OPCION_TODOS
+        
     }
 
     enfocarSecciones() {
-        this._nivel = Nivel.TODAS_LAS_SECCIONES
+        this.setEstado({
+            capas: [ 'secciones' ]
+        })
 
-        this.openStreetMap.setVisible(false)
+        // TO DO: Las interacciones deberian ser parte del estado
+        this.establecerInteraccion(Interacciones.MouseWheelZoom, true)
+        this.establecerInteraccion(Interacciones.DragPan, true)
 
-        // Mostrar TODOS los pines que haya
-        this.todosLosIconos.setVisible(true)
-        this.iconos.setVisible(false)
-
-        this.ocultarDistritos()
-        this.ocultarDistritosEnfocados()
-        this.mostrarSecciones()
-        this.enfocarBuenosAires()
-
+        // TO DO: Esto no deberia ir aqui. En un evento tal vez.
         this.listarOpcionesEnSelect(
-            this.secciones.getSource().getFeatures(),
+            this.capaActual.getSource().getFeatures(),
             seccionToNombre
         )
-
-        this.tagSelect.value = OPCION_TODOS;
+        this.tagSelect.value = OPCION_TODOS
     }
 
     enfocarBuenosAires() {
@@ -515,100 +504,6 @@ export class Mapa {
 
         if (seccion) {
             this.enfocarSeccion(seccion)
-        } else {
-            throw new Error(`No hay seccion con id = ${id}`)
-        }
-    }
-
-    enfocarDistritoPorId(id: number) {
-        const distrito = this.todosLosDistritos
-            .getSource()
-            .getFeatures()
-            .find(d => d.get('id') === id)
-
-        if (distrito) {
-            this.ocultarDistritos()
-            this.enfocarDistrito(distrito)
-            this.mostrarDistritoEnSelect(id)
-            if (this.callbackAlClickearCualquierDistrito) {
-                this.callbackAlClickearCualquierDistrito(id)
-            }
-        } else {
-            throw new Error(`No hay distrito con id = ${id}`)
-        }
-    }
-
-    enfocarFeatureEnNivel(id: number, nivel: Nivel) {
-        switch (nivel) {
-            case Nivel.UNA_SECCION:
-                this.enfocarSeccionPorId(id)
-                break
-            case Nivel.UN_DISTRITO:
-                this.enfocarDistritoPorId(id)
-                break
-            default:
-                break;
-        }
-    }
-
-    pintarDistritoPorID(id: number, relleno?: string, borde?: string, bordeGrueso?: boolean) {
-        const distrito = this.todosLosDistritos
-            .getSource()
-            .getFeatures()
-            .find(d => d.get('id') === id)
-
-        const estilo = id in this.estilosPersonalizados.distritos
-            ? this.estilosPersonalizados.distritos[id].clone()
-            : Estilos.POR_DEFECTO.clone()
-
-        if (!!relleno) {
-            estilo.setFill(new Fill({ color: hexToColor(relleno) }))
-        }
-
-
-        const ancho = !!bordeGrueso
-            ? 4
-            : 2
-
-        if (!!borde) {
-            estilo.setStroke(new Stroke({ color: hexToColor(borde), width: ancho }));
-        } else {
-            estilo.setStroke(new Stroke({
-                color: Estilos.POR_DEFECTO.getFill().getColor(), width: ancho
-            }))
-        }
-
-        if (distrito && (!!relleno || !!borde)) {
-            distrito.setStyle(estilo)
-            this.estilosPersonalizados.distritos[id] = estilo
-        } else {
-            throw new Error(`No hay distrito con id = ${id}`)
-        }
-    }
-
-    pintarSeccionPorID(id: number, relleno?: string, borde?: string) {
-        const seccion = this.secciones
-            .getSource()
-            .getFeatures()
-            .find(d => d.get('id') === id)
-
-        const estilo = Estilos.POR_DEFECTO.clone();
-
-        if (relleno) {
-            estilo.setFill(new Fill({ color: hexToColor(relleno) }))
-        }
-
-        if (borde) {
-            estilo.setStroke(new Stroke({ color: hexToColor(borde), width: 2 }))
-        } else {
-            estilo.setStroke(new Stroke({
-                color: Estilos.POR_DEFECTO.getFill().getColor(), width: 2
-            }))
-        }
-
-        if (seccion) {
-            seccion.setStyle(estilo)
-            this.estilosPersonalizados.distritos[id] = estilo
         } else {
             throw new Error(`No hay seccion con id = ${id}`)
         }

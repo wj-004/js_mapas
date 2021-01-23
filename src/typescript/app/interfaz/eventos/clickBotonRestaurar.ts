@@ -1,5 +1,9 @@
 import { Mapa } from "../../../mapa/Mapa";
 /**
+ * Mustra la capa de distritos y enfoca toda la provincia.
+ * 
+ * Este boton hace lo mismo que el de municipios. Creo que deberiamos
+ * quitarlo.
  * 
  * @param boton 
  * @param mapa 
@@ -7,15 +11,9 @@ import { Mapa } from "../../../mapa/Mapa";
  */
 export function clickBotonRestaurar(boton: HTMLButtonElement, mapa: Mapa, switchCalles: HTMLInputElement) {
     return () => {
-        mapa.soloOcultarCapaOpenStreetMap()
-        mapa.ocultarDistritosEnfocados()
-        mapa.ocultarSecciones()
-        mapa.mostrarDistritos()
-        mapa.enfocarBuenosAires()
-        mapa.ponerNivelEnTodosLosDistritos() // PARCHE, quitar
-        mapa.mostrarTodosLosIconos() // PARCHE, quitar
+        mapa.enfocarMunicipios()
         switchCalles.checked = false
         document.querySelector("#showMapStreetsLabel").classList.add('d-none') // PROBLEMA?: esto esta duplicado, se hace lo mismo en otro lado
-        localStorage.removeItem('FeatureEnfocado')
+        localStorage.removeItem('EstadoMapa')
     }
 }

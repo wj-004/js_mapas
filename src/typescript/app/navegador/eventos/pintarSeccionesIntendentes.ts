@@ -8,9 +8,9 @@ import { Mapa } from "../../../mapa/Mapa";
  */
 export function pintarSeccionesIntendentes(mapa: Mapa) {
     return evento => {
-        const secciones = evento.detail.data;
-        for (let seccion of secciones) {
-            mapa.pintarSeccionPorID(seccion.id, seccion.color);
-        }
+        const secciones: { id: number, color: string }[] = evento.detail.data;
+        const estilos = secciones
+            .map(s => ({ id: Number(s.id), relleno: s.color }))
+        mapa.setEstado({ estilos })
     }
 }

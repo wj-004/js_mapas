@@ -1,4 +1,24 @@
-# Metodos del mapa que se usan desde afuera
+# Cosas pendientes:
+
+## mostrarPines.ts
+
+- deleteIconFeatures
+
+- mostrarPinesEntidadesJudiciales
+
+## clickSelect.ts  (CASI TERMINADO)
+
+- enfocarSecciones
+
+- enfocarDistritos
+
+- nivel (propiedad de solo lectura)
+
+- enfocarSeccionPorId (REVISAR)
+
+- enfocarDistritoPorId (REVISAR)
+
+# Cosas terminadas
 
 ## configurarListenersDelMapa,ts
 
@@ -10,13 +30,13 @@
 
 - [mostrar | ocultar]Calles
 
-## configurarElementosDeInterfaz.ts
+## configurarElementosDeInterfaz.ts (HECHO)
 
 - enfocarDistritos (en el handler de **botonEnfocarDistritos**)
 
 - enfocarSecciones (en el handler de **botonEnfocarSecciones**)
 
-## clickBotonRestaurar.ts
+## clickBotonRestaurar.ts (HECHO)
 
 - soloOcultarCapaOpenStreetMap
 
@@ -32,40 +52,22 @@
 
 - mostrarTodosLosIconos (marcado como PARCHE TEMPORAL)
 
-## clickSelect.ts
-
-- enfocarSecciones
-
-- enfocarDistritos
-
-- nivel (propiedad de solo lectura)
-
-- enfocarSeccionPorId
-
-- enfocarDistritoPorId
-
-## pintarDistritosIntendents.ts
+## pintarDistritosIntendents.ts (HECHO)
 
 - pintarDistritoPorID
 
-## pintarSeccionesIntendentes.ts
+## pintarSeccionesIntendentes.ts (HECHO)
 
 - pintarSeccionPorID
 
-## pintarDepartamentosJudiciales.ts
+## pintarDepartamentosJudiciales.ts (HECHO)
 
 - pintarDistritoPorID
 
-## bordearDistritos.ts
+## bordearDistritos.ts (ELIMINADO)
 
 - pintarDistritoPorID
 
-## showMapa.ts
+## showMapa.ts (HECHO)
 
 - enfocarDistritoPorID
-
-## mostrarPines.ts
-
-- deleteIconFeatures
-
-- mostrarPinesEntidadesJudiciales

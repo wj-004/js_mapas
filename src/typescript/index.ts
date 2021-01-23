@@ -3,7 +3,7 @@ import { mostrarMapa } from "./app/interfaz/mostrarMapa";
 import { quitarDialogoCarga } from "./app/interfaz/quitarDialogoCarga";
 import { configurarListenersDelMapa } from "./app/mapa/configurarListenersDelMapa";
 import { enfocarZonaGuardada } from "./app/mapa/enfocarFeatureGuardado";
-import { configurarListenersDelNavegador } from "./app/navegador/configurarListenersDelNavegador";
+import { escucharEventosDeLivewire } from "./app/navegador/configurarListenersDelNavegador";
 import { Mapa } from "./mapa/Mapa";
 import { descargarZonas } from "./util/descargarZona";
 import { livewireEmit } from "./util/livewireEmit";
@@ -37,7 +37,7 @@ async function inicializar() {
     
     configurarListenersDelMapa(mapa)
     configurarElementosDeInterfaz(mapa)
-    configurarListenersDelNavegador(mapa)
+    escucharEventosDeLivewire(mapa)
     enfocarZonaGuardada(mapa)
 
     livewireEmit('mapaListo');

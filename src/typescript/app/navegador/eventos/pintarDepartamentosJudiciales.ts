@@ -17,11 +17,10 @@ export function pintarDepartamentosJudiciales(mapa: Mapa) {
         mapa.restablecerEstiloDeDistritos();
 
         for (let grupoId in distritosPorSeccion) {
-            const grupo = distritosPorSeccion[grupoId]
             const color = unColor();
-            for (let distrito of grupo) {
-                mapa.pintarDistritoPorID(distrito.id, color.relleno, color.borde);
-            }
+            const estiloMunicipios = distritosPorSeccion[grupoId]
+                .map(m => ({ id: m.id, relleno: color.relleno, borde: color.borde }));
+            mapa.setEstado({ estilos: estiloMunicipios })
         }
     }
 }

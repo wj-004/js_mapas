@@ -9,7 +9,7 @@ export function configurarElementosDeInterfaz(mapa: Mapa) {
 
     const botonEnfocarDistritos: HTMLButtonElement = document.querySelector("#showDistritos")
     botonEnfocarDistritos.onclick = () => {
-        mapa.enfocarDistritos()
+        mapa.enfocarMunicipios()
         showMapStreets.checked = false
     }
     

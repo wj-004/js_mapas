@@ -8,9 +8,7 @@ import { Mapa } from "../../../mapa/Mapa";
  */
 export function pintarDistritosIntendents(mapa: Mapa) {
     return evento => {
-        const intendentes = evento.detail.data;
-        for (let intendente of intendentes) {
-            mapa.pintarDistritoPorID(intendente.distrito_id, intendente.color);
-        }
+        const estilos: { id: number, relleno: string, borde?: string }[]= evento.detail.data;
+        mapa.setEstado({ estilos  })
     }
 }
