@@ -1,13 +1,8 @@
 import { Mapa } from "../../../mapa/Mapa"
+import { MapaDeBuenosAires } from "../../../mapa/MapDeBuenosAires"
 
-export function clickVisualizarCalles(checkbox: HTMLInputElement, mapa: Mapa) {
+export function clickVisualizarCalles(checkbox: HTMLInputElement, mapa: MapaDeBuenosAires) {
     return () => {
-        if (checkbox.checked) {
-            // mapa.mostrarCallesEnZonaEnfocada()
-            // capas = [ opensm, municipios ]
-            // visibilidad = [ { id } ]
-        } else {
-            mapa.ocultarCalles()
-        }
+        mapa.alternarVisibilidadDeCalles(checkbox.checked)
     }
 }

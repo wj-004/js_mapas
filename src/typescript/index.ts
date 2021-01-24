@@ -5,35 +5,18 @@ import { configurarListenersDelMapa } from "./app/mapa/configurarListenersDelMap
 import { enfocarZonaGuardada } from "./app/mapa/enfocarFeatureGuardado";
 import { escucharEventosDeLivewire } from "./app/navegador/configurarListenersDelNavegador";
 import { Mapa } from "./mapa/Mapa";
+import { MapaDeBuenosAires } from "./mapa/MapDeBuenosAires";
 import { descargarZonas } from "./util/descargarZona";
 import { livewireEmit } from "./util/livewireEmit";
 
 window.onload = inicializar
 
 async function inicializar() {
-    // Esperar que se descarguen los datos para el mapa
-    const zonas = await descargarZonas([
-        '../data/vector_data/bsas_provincia_distritos.geojson',
-        '../data/vector_data/bsas_provincia_secciones.geojson',
-        '../data/vector_data/contorno_relleno.geojson'
-    ]);
+    const mapa = new MapaDeBuenosAires(document.querySelector("#idSecciones"));
 
-    quitarDialogoCarga()
-    mostrarMapa()
-
-    const mapa = new Mapa(
-        document.querySelector("#map"),
-        document.querySelector("#idSecciones"),
-        zonas[2],
-        [
-            { nombre: 'municipios', zonas: zonas[0] },
-            { nombre: 'secciones', zonas: zonas[1] }
-        ]
-    )
+    await mapa.inicializar();
 
     window['mapa'] = mapa;
-
-    mapa.setEstado({ capas: ['municipios'] })
     
     configurarListenersDelMapa(mapa)
     configurarElementosDeInterfaz(mapa)

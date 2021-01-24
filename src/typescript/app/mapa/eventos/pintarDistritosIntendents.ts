@@ -1,4 +1,4 @@
-import { Mapa } from "../../../mapa/Mapa";
+import { MapaDeBuenosAires } from "../../../mapa/MapDeBuenosAires";
 
 /**
  * Listener para un evento.
@@ -6,9 +6,9 @@ import { Mapa } from "../../../mapa/Mapa";
  * Esta funcion deberia ser generica para este evento y otros de pintado de distritos.
  * Tarea para otro dia.
  */
-export function pintarDistritosIntendents(mapa: Mapa) {
+export function pintarDistritosIntendents(mapa: MapaDeBuenosAires) {
     return evento => {
         const estilos: { id: number, relleno: string, borde?: string, bordeGrueso?: boolean }[] = evento.detail.data;
-        mapa.setEstado({ estilos  })
+        mapa.pintarMunicipios(estilos)
     }
 }

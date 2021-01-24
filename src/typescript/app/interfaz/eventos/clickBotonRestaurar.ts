@@ -1,4 +1,5 @@
 import { Mapa } from "../../../mapa/Mapa";
+import { MapaDeBuenosAires } from "../../../mapa/MapDeBuenosAires";
 /**
  * Mustra la capa de distritos y enfoca toda la provincia.
  * 
@@ -9,9 +10,9 @@ import { Mapa } from "../../../mapa/Mapa";
  * @param mapa 
  * @param switchCalles PARCHE: en lo posible este argumento no deberia ir aqui
  */
-export function clickBotonRestaurar(boton: HTMLButtonElement, mapa: Mapa, switchCalles: HTMLInputElement) {
+export function clickBotonRestaurar(boton: HTMLButtonElement, mapa: MapaDeBuenosAires, switchCalles: HTMLInputElement) {
     return () => {
-        mapa.enfocarMunicipios()
+        mapa.municipios()
         switchCalles.checked = false
         document.querySelector("#showMapStreetsLabel").classList.add('d-none') // PROBLEMA?: esto esta duplicado, se hace lo mismo en otro lado
         localStorage.removeItem('EstadoMapa')

@@ -23,6 +23,7 @@ import Stroke from 'ol/style/Stroke';
 import TileLayer from 'ol/layer/Tile'
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
+import { DistritosPorIdSeccion } from '../data/DistritosPorSeccion';
 
 const extentBuenosAires = [...fromLonLat([-64, -42]), ...fromLonLat([-56, -32])] as Extent
 
@@ -58,10 +59,21 @@ export type Estado = {
     estilos: EstiloZona[],
 
     /**
-     * Indica los IDs de las zonas ocultas. Si una zona esta oculta no se la
-     * dibuja en el mapa. Las zonas son visibles por defecto.
+     * Indica la visiblidad de las zonas. Esta prop debe tener solo una de las
+     * dos alternativas: zonasOcultas o zonasVisibles.
+     * 
+     * zonasVisibles: indica la lista de IDs de las zonas que deben verse, el
+     * resto de las zonas son ocultadas.
+     * 
+     * zonasOcultas: indica la lista de IDs de las zonas que se ocultaran, el
+     * resto permanecen visibles.
+     * 
+     * Si la prop esta vacia, todas las zonas son visibles.
      */
-    zonasOcultas: number[]
+    visibilidad: {
+        zonasOcultas?  : number[],
+        zonasVisibles? : number[],
+    }
 
     /**
      * Indica si el usuario tiene permitido hacer click en una zona. Verdadero por defecto.
@@ -69,7 +81,7 @@ export type Estado = {
     clickHabilitado: boolean
 }
 
-type EstiloZona = { id: number, relleno?: string, borde?: string, bordeGrueso?: boolean }
+export type EstiloZona = { id: number, relleno?: string, borde?: string, bordeGrueso?: boolean }
 
 /**
  * Valor de la opcion "Todos" en el selector de seccion/distrito.
@@ -85,7 +97,14 @@ export class Mapa {
     private map: Map;
 
     private capasDisponibles: { [nombre: string]: () => VectorLayer | TileLayer } = {}
-    estado: Estado = { capas: [], pines: [], enfoque: [], estilos: [], zonasOcultas: [], clickHabilitado: true }
+    estado: Estado = { 
+        capas: [],
+        pines: [],
+        enfoque: [],
+        estilos: [],
+        visibilidad: {},
+        clickHabilitado: true
+    }
     historialDeEstado: Estado[] = [];
 
     /**
@@ -102,7 +121,8 @@ export class Mapa {
     private elementoResaltado: FeatureLike = null;
 
     private entornoBsAs: VectorLayer;
-
+    
+    private callbackClickSeccion: Funcion<number, void>;
     private callbackAlClickearCualquierDistrito: Funcion<number, void>;
     private callbackAlEnfocar: Funcion<Estado, void>;
 
@@ -192,32 +212,60 @@ export class Mapa {
      */
     setEstado(estado: Partial<Estado>, emitirEventos = true) {
         this.historialDeEstado.push(this.estado);
-        this.estado = { ...this.estado, ...estado }
-        this.estado = this.mutarEstado(this.estado);
+        this.estado = this.mutarEstado(this.estado, { ...this.estado, ...estado });
         this.establecerCapasVisibles(this.estado.capas);
         this.enfocarZona(this.estado.enfoque);
         this.pintarZonas(this.estado.estilos);
-        this.ocultarZona(this.estado.zonasOcultas);
+        this.establecerVisibilidad(this.estado.visibilidad);
         // this.mostrarPines(this.estado.capas);
 
-        if (emitirEventos && this.estado.enfoque.length > 0) {
+        if (emitirEventos && 'enfoque' in estado) {
             this.llamarCallbackEnfocar();
+        }
+    }
+
+    private establecerVisibilidad(visibilidad: { zonasVisibles?: number[], zonasOcultas?: number[] }) {
+        if ('zonasVisibles' in visibilidad && 'zonasOcultas' in visibilidad) {
+            throw new Error('ERROR: "zonasVisibles" y "zonasOcultas" NO pueden estar en la prop visibilidad a la vez')
+        }
+
+        if ('zonasVisibles' in visibilidad) {
+            // Ocultar el resto de las zonas para dejar solo las que deben ser visibles
+            const elResto = this.zonasMenosIds(visibilidad.zonasVisibles)
+                .map(z => Number(z.get('id')))
+            this.ocultarZona(elResto);
+        }
+
+        if ('zonasOcultas' in visibilidad) {
+            this.ocultarZona(visibilidad.zonasOcultas);
         }
     }
 
     /**
      * Este metodo se encarga de establecer el valor de propiedades del estado que dependen
      * de otras propiedades del estado.
-     * @param estado 
+     * @param estadoActual 
      */
-    private mutarEstado(estado: Estado) {
+    private mutarEstado(estadoActual: Estado, proximoEstado: Estado) {
         /**
          * Cuando hay alguna seccion enfocada el click debe deshabilitarse para impedir
          * que se enfoque otra zona sin antes quitarle el foco a las ya enfocadas.
          */
-        const clickHabilitado = !(estado.enfoque.length > 0)
+        const clickHabilitado = !(proximoEstado.enfoque.length > 0)
 
-        return { ...estado, clickHabilitado }
+        // Revisar si se cambiar de la capa "secciones" a la capa "municipios"
+        const nombreProximaCapa = proximoEstado.capas[proximoEstado.capas.length - 1]
+
+        let estilos = proximoEstado.estilos;
+
+        if (this.nombreCapaActual !== nombreProximaCapa) {
+            if (this.nombreCapaActual === 'secciones' && nombreProximaCapa === 'municipios') {
+                estilos = estadoActual.estilos
+                    .filter(estilo => proximoEstado.enfoque.includes(estilo.id))
+            }
+        }
+
+        return { ...proximoEstado, clickHabilitado, estilos }
     }
 
     /**
@@ -235,7 +283,9 @@ export class Mapa {
             if (capa instanceof VectorLayer) {
                 capa.setStyle(Estilos.POR_DEFECTO)
             }
-            this.estilosPersonalizados[nombre] = {}
+            if (!(nombre in this.estilosPersonalizados)) {
+                this.estilosPersonalizados[nombre] = {}
+            }
             this.map.getLayers().push(capa)
             this.capas[nombre] = capa
         }
@@ -371,12 +421,18 @@ export class Mapa {
 
     private alClickearSeccion(seccion: Feature) {
         const id = Number(seccion.get('id'));
-        this.setEstado({ enfoque: [ id ] })
-        
-        const elResto = this.zonasMenosIds([id])
-            .map(z => Number(z.get('id')));
 
-        this.setEstado({ enfoque: [ id ], zonasOcultas: elResto })
+        const distritosDeSeccion = DistritosPorIdSeccion[id];
+
+        this.setEstado({
+            capas: ['municipios'],
+            enfoque: distritosDeSeccion,
+            visibilidad: { zonasVisibles: distritosDeSeccion }
+        })
+
+        if (this.callbackClickSeccion) {
+            this.callbackClickSeccion(id)
+        }
     }
 
     private alClickearDistrito(distrito: Feature) {
@@ -385,7 +441,7 @@ export class Mapa {
         const elResto = this.zonasMenosIds([id])
             .map(z => Number(z.get('id')));
 
-        this.setEstado({ enfoque: [ id ], zonasOcultas: elResto })
+        this.setEstado({ enfoque: [ id ], visibilidad: { zonasOcultas: elResto } })
         this.llamarCallbackClickEnDistrito(id)
     }
 
@@ -401,7 +457,7 @@ export class Mapa {
      */
     mostrarCallesEnZonaEnfocada() {
         this.setEstado({
-            zonasOcultas: this.estado.enfoque,
+            visibilidad: { zonasOcultas: this.estado.enfoque },
             capas: [CAPA_OPEN_STREET_MAP, this.nombreCapaActual]
         })
     }
@@ -409,12 +465,9 @@ export class Mapa {
     /**
      * Oculta las calles y solo muestra la zona enfocada
      */
-    ocultarCalles() {
-        const elResto = this.zonasMenosIds(this.estado.enfoque)
-        .map(z => Number(z.get('id')));
-        
+    ocultarCallesEnZonaEnfocada() {        
         this.setEstado({
-            zonasOcultas: elResto,
+            visibilidad: { zonasVisibles: this.estado.enfoque },
             capas: [this.nombreCapaActual]
         })
     }
@@ -423,27 +476,19 @@ export class Mapa {
         this.setEstado({
             capas: [ 'municipios' ],
             enfoque: [],
-            zonasOcultas: []
+            visibilidad: { zonasOcultas: [] }
         })
 
         // TO DO: Las interacciones deberian ser parte del estado
         this.establecerInteraccion(Interacciones.MouseWheelZoom, true)
-        this.establecerInteraccion(Interacciones.DragPan, true)
-
-        // TO DO: Esto no deberia ir aqui. En un evento tal vez.
-        this.listarOpcionesEnSelect(
-            this.capaActual.getSource().getFeatures(),
-            distritoToNombre
-        )
-        this.tagSelect.value = OPCION_TODOS
-        
+        this.establecerInteraccion(Interacciones.DragPan, true)        
     }
 
     enfocarSecciones() {
         this.setEstado({
             capas: [ 'secciones' ],
             enfoque: [],
-            zonasOcultas: []
+            visibilidad: { zonasOcultas: [] }
         })
 
         // TO DO: Las interacciones deberian ser parte del estado
@@ -483,6 +528,10 @@ export class Mapa {
 
     alClickearCualquierDistrito(callback: Funcion<number, void>) {
         this.callbackAlClickearCualquierDistrito = callback
+    }
+
+    alClickearCualquierSeccion(callback: Funcion<number, void>) {
+        this.callbackClickSeccion = callback
     }
 
     alEnfocar(callback: Funcion<Estado, void>) {

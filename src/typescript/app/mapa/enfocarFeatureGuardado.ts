@@ -1,9 +1,9 @@
-import { Mapa } from "../../mapa/Mapa"
+import { MapaDeBuenosAires } from "../../mapa/MapDeBuenosAires";
 
-export function enfocarZonaGuardada(mapa: Mapa) {
+export function enfocarZonaGuardada(mapa: MapaDeBuenosAires) {
     const estadoMapaMaybe = localStorage.getItem('EstadoMapa')
     if (!!estadoMapaMaybe) {
         const estadoMapa = JSON.parse(estadoMapaMaybe)
-        mapa.setEstado(estadoMapa, false);
+        mapa.restaurarEstado(estadoMapa, false);
     }
 }

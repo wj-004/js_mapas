@@ -1,4 +1,5 @@
 import { Mapa } from "../../../mapa/Mapa";
+import { MapaDeBuenosAires } from "../../../mapa/MapDeBuenosAires";
 
 type Evento = {
     detail: {
@@ -8,7 +9,7 @@ type Evento = {
 
 type Distrito = { id: number, seccion_id: number }
 
-export function pintarDepartamentosJudiciales(mapa: Mapa) {
+export function pintarDepartamentosJudiciales(mapa: MapaDeBuenosAires) {
     return evento => {
         // Separar distritos por seccion (en el futuro seran separados por depto judicial)
         const distritos = (evento as Evento).detail.data
@@ -18,7 +19,7 @@ export function pintarDepartamentosJudiciales(mapa: Mapa) {
             const color = unColor();
             const estiloMunicipios = distritosPorSeccion[grupoId]
                 .map(m => ({ id: m.id, relleno: color.relleno, borde: color.borde }));
-            mapa.setEstado({ estilos: estiloMunicipios })
+            mapa.pintarMunicipios(estiloMunicipios)
         }
     }
 }

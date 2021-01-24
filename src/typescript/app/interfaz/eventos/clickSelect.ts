@@ -1,18 +1,19 @@
 import { Mapa } from "../../../mapa/Mapa";
+import { MapaDeBuenosAires } from "../../../mapa/MapDeBuenosAires";
 
-export function clickSelect(select: HTMLSelectElement, mapa: Mapa) {
+export function clickSelect(select: HTMLSelectElement, mapa: MapaDeBuenosAires) {
     return () => {
         const id = Number(select.value)
         if (id === -1) {
-            mapa.setEstado({ enfoque: [] })
+            mapa.enfocarProvincia()
         } else {
-            if (mapa.estado.enfoque.length > 0) {
-                // mapa.enfocarDistritoPorId(id)
+            if (mapa.hayAlgunaZonaEnfocada()) {
+                mapa.mostrarSoloZona([id])
             } else {
-                if (mapa.nombreCapaActual === 'secciones') {
-                    // mapa.enfocarSeccionPorId(id)
-                } else if (mapa.nombreCapaActual === 'municipios') {
-                    // mapa.enfocarDistritoPorId(id)
+                if (mapa.estaEnSecciones()) {
+                    mapa.enfocarMunicipiosDeSeccion(id)
+                } else {
+                    mapa.mostrarSoloZona([id])
                 }
             }
         }
