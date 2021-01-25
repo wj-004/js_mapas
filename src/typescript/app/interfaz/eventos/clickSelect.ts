@@ -1,4 +1,3 @@
-import { Mapa } from "../../../mapa/Mapa";
 import { MapaDeBuenosAires } from "../../../mapa/MapDeBuenosAires";
 
 export function clickSelect(select: HTMLSelectElement, mapa: MapaDeBuenosAires) {

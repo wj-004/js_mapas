@@ -2,6 +2,7 @@ import { MapaDeBuenosAires } from "../../mapa/MapDeBuenosAires"
 import { clickBotonRestaurar } from "./eventos/clickBotonRestaurar"
 import { clickSelect } from "./eventos/clickSelect"
 import { clickVisualizarCalles } from "./eventos/clickVisualizarCalles"
+import { Selector } from "./selector/Selector"
 
 export function configurarElementosDeInterfaz(mapa: MapaDeBuenosAires) {
     const showMapStreets: HTMLInputElement = document.querySelector("#showMapStreets")
@@ -22,6 +23,12 @@ export function configurarElementosDeInterfaz(mapa: MapaDeBuenosAires) {
     const initialShow: HTMLButtonElement = document.querySelector("#initialShow")
     initialShow.onclick = clickBotonRestaurar(initialShow, mapa, showMapStreets)
     
-    const select: HTMLSelectElement = document.querySelector("#idSecciones")
-    select.onchange = clickSelect(select, mapa)
+    const selector = new Selector(
+        document.querySelector("#idSecciones"),
+        {
+            secciones: mapa.obtenerNombresDeZonas('secciones'),
+            municipios: mapa.obtenerNombresDeZonas('municipios')
+        },
+        mapa
+    )
 }

@@ -4,4 +4,6 @@ export function alClickearDistrito(id: number) {
         // @ts-ignore
         livewire.emit('verDetalle', id)
     }
+
+    dispatchEvent(new CustomEvent('clickEnDistrito', { detail: id }))
 }

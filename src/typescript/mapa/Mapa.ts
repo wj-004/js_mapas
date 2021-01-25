@@ -251,7 +251,7 @@ export class Mapa {
          * Cuando hay alguna seccion enfocada el click debe deshabilitarse para impedir
          * que se enfoque otra zona sin antes quitarle el foco a las ya enfocadas.
          */
-        const clickHabilitado = !(proximoEstado.enfoque.length > 0)
+        const clickHabilitado = !(proximoEstado.enfoque.length === 1)
 
         // Revisar si se cambiar de la capa "secciones" a la capa "municipios"
         const nombreProximaCapa = proximoEstado.capas[proximoEstado.capas.length - 1]
@@ -438,10 +438,8 @@ export class Mapa {
     private alClickearDistrito(distrito: Feature) {
         const id = Number(distrito.get('id'));
 
-        const elResto = this.zonasMenosIds([id])
-            .map(z => Number(z.get('id')));
+        this.setEstado({ enfoque: [ id ], visibilidad: { zonasVisibles: [id] } })
 
-        this.setEstado({ enfoque: [ id ], visibilidad: { zonasOcultas: elResto } })
         this.llamarCallbackClickEnDistrito(id)
     }
 

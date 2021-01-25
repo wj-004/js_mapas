@@ -4,9 +4,8 @@ import { DistritosPorIdSeccion } from "../data/DistritosPorSeccion";
 import { aTitulo } from "../util/aTitulo";
 import { descargarZonas } from "../util/descargarZona";
 import { Funcion } from "../util/Funcion";
+import { livewireEmit } from "../util/livewireEmit";
 import { Estado, EstiloZona, Mapa } from "./Mapa";
-
-const OPCION_TODOS = -1
 
 export class MapaDeBuenosAires {
 
@@ -14,8 +13,13 @@ export class MapaDeBuenosAires {
 
     private estiloMunicipios: EstiloZona[] = []
 
-    private nombresMunicipios: { id: number, nombre: string }[] = []
-    private nombresSecciones: { id: number, nombre: string }[] = []
+    private nombresMunicipios: { valor: number, nombre: string }[] = []
+    private nombresSecciones: { valor: number, nombre: string }[] = []
+
+    private callbackAlEnfocar:              Funcion<Estado, void>[] = [];
+    private callbackAlClickearMunicipio:    Funcion<number, void>[] = [];
+    private callbackAlClickearSeccion:      Funcion<number, void>[] = [];
+    private callbackAlCambiarCapa:          Funcion<string, void>[] = [];
 
     constructor(private tagSelect: HTMLSelectElement) {}
 
@@ -53,11 +57,22 @@ export class MapaDeBuenosAires {
             z => z.get('nombreSeccion')
         )
 
-        this.listarOpcionesEnSelect(this.nombresMunicipios)
-        this.tagSelect.value = String(OPCION_TODOS)
+        this.mapa.alEnfocar(estado => {
+            for (let f of this.callbackAlEnfocar) {
+                f(estado)
+            }
+        })
+
+        this.mapa.alClickearCualquierDistrito(id => {
+            for (let f of this.callbackAlClickearMunicipio) {
+                f(id)
+            }
+        })
 
         this.mapa.alClickearCualquierSeccion(id => {
-            this.tagSelect.value = String(id)
+            for (let f of this.callbackAlClickearSeccion) {
+                f(id)
+            }
         })
     }
 
@@ -70,10 +85,9 @@ export class MapaDeBuenosAires {
             pines: [],
             visibilidad: {}
         })
-        
-        // TO DO: Esto no deberia ir aqui. En un evento tal vez.
-        this.listarOpcionesEnSelect(this.nombresMunicipios)
-        this.tagSelect.value = String(OPCION_TODOS)
+        for (let f of this.callbackAlCambiarCapa) {
+            f('municipios')
+        }
     }
 
     secciones() {
@@ -85,8 +99,9 @@ export class MapaDeBuenosAires {
             pines: [],
             visibilidad: {}
         });
-        this.listarOpcionesEnSelect(this.nombresSecciones)
-        this.tagSelect.value = String(OPCION_TODOS)
+        for (let f of this.callbackAlCambiarCapa) {
+            f('secciones')
+        }
     }
 
     estaEnSecciones() {
@@ -117,9 +132,6 @@ export class MapaDeBuenosAires {
             enfoque: distritosDeSeccion,
             visibilidad: { zonasVisibles: distritosDeSeccion }
         })
-
-        this.listarOpcionesEnSelect(this.nombresMunicipios)
-        this.tagSelect.value = String(OPCION_TODOS)
     }
 
     pintarMunicipios(estilos: EstiloZona[]) {
@@ -131,16 +143,19 @@ export class MapaDeBuenosAires {
     }
 
     alClickearMunicipio(callback: Funcion<number, void>) {
-        this.mapa.alClickearCualquierDistrito(id => {
-            this.tagSelect.value = String(id)
-            if (callback) {
-                callback(id)
-            }
-        })
+        this.callbackAlClickearMunicipio.push(callback)
     }
 
-    alEnfocar(callback) {
-        this.mapa.alEnfocar(callback)
+    alClickearSeccion(callback: Funcion<number, void>) {
+        this.callbackAlClickearSeccion.push(callback)
+    }
+
+    alEnfocar(callback: Funcion<Estado, void>) {
+        this.callbackAlEnfocar.push(callback)
+    }
+
+    alCambiarCapa(callback: Funcion<string, void>) {
+        this.callbackAlCambiarCapa.push(callback)
     }
 
     alternarVisibilidadDeCalles(mostrar: boolean) {
@@ -155,10 +170,22 @@ export class MapaDeBuenosAires {
         this.mapa.setEstado(estado, emitirEventos)
     }
 
+    obtenerNombresDeZonas(capa: 'secciones' | 'municipios'): { nombre: string, valor: number }[] {
+        switch (capa) {
+            case 'secciones':
+                return this.nombresSecciones
+            case 'municipios':
+                return this.nombresMunicipios
+        }
+    }
+
+    obtenerCapaActual() {
+        return this.mapa.nombreCapaActual
+    }
+
     private formatearNombres(zonas: any[], f: (a: any) => string) {
         return zonas
-            .map(z => ({ id: Number(z.get('id')), nombre: f(z) }))
-            .map(({id, nombre}) => ({ id, nombre: nombre.split(" ").map(aTitulo).join(" ") }))
+            .map(z => ({ valor: Number(z.get('id')), nombre: aTitulo(f(z)) }))
     }
 
     private listarOpcionesEnSelect(nombres: { id: number, nombre: string }[]) {
