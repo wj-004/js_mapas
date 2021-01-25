@@ -24,6 +24,7 @@ import TileLayer from 'ol/layer/Tile'
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import { DistritosPorIdSeccion } from '../data/DistritosPorSeccion';
+import { Coordinate } from 'ol/coordinate';
 
 const extentBuenosAires = [...fromLonLat([-64, -42]), ...fromLonLat([-56, -32])] as Extent
 
@@ -40,7 +41,7 @@ export type Estado = {
     /**
      * Indica los pines visibles en el mapa.
      */
-    pines: string[],
+    pines: Pin[],
 
     /**
      * Indica los IDs de las zonas (o zona) enfocadas. Si una zona esta
@@ -71,8 +72,8 @@ export type Estado = {
      * Si la prop esta vacia, todas las zonas son visibles.
      */
     visibilidad: {
-        zonasOcultas?  : number[],
-        zonasVisibles? : number[],
+        zonasOcultas?: number[],
+        zonasVisibles?: number[],
     }
 
     /**
@@ -80,6 +81,8 @@ export type Estado = {
      */
     clickHabilitado: boolean
 }
+
+export type Pin = { latitud: number, longitud: number, color: string }
 
 export type EstiloZona = { id: number, relleno?: string, borde?: string, bordeGrueso?: boolean }
 
@@ -97,7 +100,7 @@ export class Mapa {
     private map: Map;
 
     private capasDisponibles: { [nombre: string]: () => VectorLayer | TileLayer } = {}
-    estado: Estado = { 
+    estado: Estado = {
         capas: [],
         pines: [],
         enfoque: [],
@@ -121,13 +124,13 @@ export class Mapa {
     private elementoResaltado: FeatureLike = null;
 
     private entornoBsAs: VectorLayer;
-    
+
     private callbackClickSeccion: Funcion<number, void>;
     private callbackAlClickearCualquierDistrito: Funcion<number, void>;
     private callbackAlEnfocar: Funcion<Estado, void>;
 
     private estilosPersonalizados: {
-        [ nombreCapa: string ]: { [id: number]: Style },
+        [nombreCapa: string]: { [id: number]: Style },
     } = { distritos: {}, secciones: {} }
 
     constructor(
@@ -149,9 +152,15 @@ export class Mapa {
             })
         }
 
-        this.entornoBsAs = new VectorLayer({ source: new VectorSource({
-            features: zonaEntornoBsAs, format: new GeoJSON()
-        }) })
+        this.iconos = new VectorLayer({
+            source: new VectorSource()
+        })
+
+        this.entornoBsAs = new VectorLayer({
+            source: new VectorSource({
+                features: zonaEntornoBsAs, format: new GeoJSON()
+            })
+        })
         this.entornoBsAs.setStyle(Estilos.ENTORNO)
 
         // Mostrar mapa
@@ -217,11 +226,18 @@ export class Mapa {
         this.enfocarZona(this.estado.enfoque);
         this.pintarZonas(this.estado.estilos);
         this.establecerVisibilidad(this.estado.visibilidad);
-        // this.mostrarPines(this.estado.capas);
+        this.mostrarPines(this.estado.pines);
 
         if (emitirEventos && 'enfoque' in estado) {
             this.llamarCallbackEnfocar();
         }
+    }
+
+    private mostrarPines(pines: Pin[]) {
+        this.iconos.getSource().clear()
+        const iconos = pines
+            .map(pin => this.crearPin(pin.latitud, pin.longitud, pin.color))
+        this.iconos.getSource().addFeatures(iconos)
     }
 
     private establecerVisibilidad(visibilidad: { zonasVisibles?: number[], zonasOcultas?: number[] }) {
@@ -265,7 +281,28 @@ export class Mapa {
             }
         }
 
-        return { ...proximoEstado, clickHabilitado, estilos }
+        let pines = proximoEstado.pines
+
+        if (proximoEstado.enfoque.length > 0 && pines.length > 0) {
+            let capa = this.nombreCapaActual
+            const proximaCapa = proximoEstado.capas[proximoEstado.capas.length - 1]
+            if (this.nombreCapaActual === 'secciones' && proximaCapa === 'municipios') {
+                capa = 'municipios'
+            }
+            const zonas = (this.capas[capa] as VectorLayer)
+                .getSource()
+                .getFeatures()
+                .filter(f => proximoEstado.enfoque.includes(Number(f.get('id'))))
+
+            pines = pines
+                .filter(
+                    pin => zonas.some(z =>
+                        this.zonaContieneCoord(z, fromLonLat([pin.longitud, pin.latitud]))
+                    )
+                )
+        }
+
+        return { ...proximoEstado, clickHabilitado, estilos, pines }
     }
 
     /**
@@ -291,6 +328,7 @@ export class Mapa {
         }
 
         this.map.getLayers().push(this.entornoBsAs)
+        this.map.getLayers().push(this.iconos)
 
         this.nombreCapaActual = nombresDeCapas[nombresDeCapas.length - 1]
     }
@@ -301,7 +339,7 @@ export class Mapa {
                 .getSource()
                 .getFeatures()
                 .filter(z => ids.includes(Number(z.get('id'))))
-        
+
             const coleccion = new GeometryCollection(porciones.map(z => z.getGeometry()))
             this.map.getView().fit(coleccion.getExtent())
         } else {
@@ -358,11 +396,11 @@ export class Mapa {
             .getSource()
             .getFeatures()
             .find(d => d.get('id') === id);
-        
+
         if (zona) {
             return zona
         } else {
-            throw new Error(`No hay zona con id = ${id} en la capa ${ this.nombreCapaActual }`)
+            throw new Error(`No hay zona con id = ${id} en la capa ${this.nombreCapaActual}`)
         }
     }
 
@@ -438,7 +476,7 @@ export class Mapa {
     private alClickearDistrito(distrito: Feature) {
         const id = Number(distrito.get('id'));
 
-        this.setEstado({ enfoque: [ id ], visibilidad: { zonasVisibles: [id] } })
+        this.setEstado({ enfoque: [id], visibilidad: { zonasVisibles: [id] } })
 
         this.llamarCallbackClickEnDistrito(id)
     }
@@ -463,7 +501,7 @@ export class Mapa {
     /**
      * Oculta las calles y solo muestra la zona enfocada
      */
-    ocultarCallesEnZonaEnfocada() {        
+    ocultarCallesEnZonaEnfocada() {
         this.setEstado({
             visibilidad: { zonasVisibles: this.estado.enfoque },
             capas: [this.nombreCapaActual]
@@ -472,19 +510,19 @@ export class Mapa {
 
     enfocarMunicipios() {
         this.setEstado({
-            capas: [ 'municipios' ],
+            capas: ['municipios'],
             enfoque: [],
             visibilidad: { zonasOcultas: [] }
         })
 
         // TO DO: Las interacciones deberian ser parte del estado
         this.establecerInteraccion(Interacciones.MouseWheelZoom, true)
-        this.establecerInteraccion(Interacciones.DragPan, true)        
+        this.establecerInteraccion(Interacciones.DragPan, true)
     }
 
     enfocarSecciones() {
         this.setEstado({
-            capas: [ 'secciones' ],
+            capas: ['secciones'],
             enfoque: [],
             visibilidad: { zonasOcultas: [] }
         })
@@ -548,6 +586,26 @@ export class Mapa {
         }
     }
 
+    private crearPin(latitud: number, longitud: number, color: string) {
+        var iconFeature = new Feature({
+            geometry: new Point(fromLonLat([longitud, latitud])),
+        });
+
+        iconFeature.setStyle(
+            new Style({
+                image:
+                    new Icon({
+                        anchor: [0.5, 1],
+                        src: "../../../img/pines/judiciales/PIN_GENERICO.png",
+                        scale: 0.8,
+                        color
+                    })
+            })
+        );
+
+        return iconFeature;
+    }
+
     // //INICIO DE MANEJO DE ICONOS - MODIFICAR
     // public deleteIconFeatures() {
     //     if (!!this.todosLosIconos && !!this.todosLosIconos.getSource()) {
@@ -574,13 +632,13 @@ export class Mapa {
 
     //         // Dejar solo los iconos validos. Por algun motivo hay iconos que tienen una (o dos) coordenadas NaN.
     //         .filter(i => this.tieneCoordenadasValidas(i))
-            
+
     //         // Tomar todos los que estan DENTRO de la zona dada
     //         .filter(i => {
     //             const coords = (i.getGeometry() as Point).getCoordinates()
     //             return zona.some(z => this.zonaContieneCoord(z, coords))
     //         })
-        
+
     //     this.iconos.getSource().clear();
     //     this.iconos.getSource().addFeatures(iconos)
     //     this.todosLosIconos.setVisible(false);
@@ -593,9 +651,9 @@ export class Mapa {
     //         && !isNaN((icono.getGeometry() as Point).getCoordinates()[1])
     // }
 
-    // private zonaContieneCoord(zona: Feature, coord: Coordinate): boolean {
-    //     return zona.getGeometry().intersectsCoordinate(coord)
-    // }
+    private zonaContieneCoord(zona: Feature, coord: Coordinate): boolean {
+        return zona.getGeometry().intersectsCoordinate(coord)
+    }
 
     // public mostrarPinesEntidadesJudiciales(nombre, entidad, lonLatAtArray) {
     //     if (typeof entidad !== 'string') {

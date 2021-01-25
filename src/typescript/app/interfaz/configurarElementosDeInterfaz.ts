@@ -1,4 +1,5 @@
 import { MapaDeBuenosAires } from "../../mapa/MapDeBuenosAires"
+import { alClickearDistrito } from "../mapa/eventos/alClickearDistrito"
 import { clickBotonRestaurar } from "./eventos/clickBotonRestaurar"
 import { clickSelect } from "./eventos/clickSelect"
 import { clickVisualizarCalles } from "./eventos/clickVisualizarCalles"
@@ -31,4 +32,5 @@ export function configurarElementosDeInterfaz(mapa: MapaDeBuenosAires) {
         },
         mapa
     )
+    selector.alSeleccionar(alClickearDistrito)
 }

@@ -1,6 +1,7 @@
 import { DistritosPorIdSeccion } from "../../../data/DistritosPorSeccion";
 import { MapaDeBuenosAires } from "../../../mapa/MapDeBuenosAires";
 import { aTitulo } from "../../../util/aTitulo";
+import { Funcion } from "../../../util/Funcion";
 
 const TODOS_LOS_MUNICIPIOS_O_SECCIONES = -1;
 const MUNICIPIOS_DE_SECCION_ACTUAL = -2;
@@ -15,6 +16,8 @@ type EstadoSelector = {
 }
 export class Selector {
     private _estado: EstadoSelector
+
+    private callbackAlSeleccionar: Funcion<number, void>[] = []
 
     constructor(
         private select: HTMLSelectElement,
@@ -42,6 +45,10 @@ export class Selector {
         }
     }
 
+    alSeleccionar(callback: Funcion<number, void>) {
+        this.callbackAlSeleccionar.push(callback)
+    }
+
     private set estado(e: EstadoSelector) {
         this.quitarOpciones()
         this.agregarOpcion({ nombre: 'Todos', valor: e.valorOpcionTodos });
@@ -60,6 +67,12 @@ export class Selector {
         const estadoAnterior = this.estado
         this.estado = this.proximoEstado(estadoAnterior, valor)
         this.actualizarMapa(estadoAnterior, this.estado)
+
+        if (this.estado.capa === 'municipios' && this.estado.valor !== TODOS_LOS_MUNICIPIOS_O_SECCIONES) {
+            for (let f of this.callbackAlSeleccionar) {
+                f(valor)
+            }
+        }
     }
 
     private actualizarMapa(estadoPrevio: EstadoSelector, estadoActual: EstadoSelector) {

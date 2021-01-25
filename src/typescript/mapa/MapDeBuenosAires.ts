@@ -4,14 +4,14 @@ import { DistritosPorIdSeccion } from "../data/DistritosPorSeccion";
 import { aTitulo } from "../util/aTitulo";
 import { descargarZonas } from "../util/descargarZona";
 import { Funcion } from "../util/Funcion";
-import { livewireEmit } from "../util/livewireEmit";
-import { Estado, EstiloZona, Mapa } from "./Mapa";
+import { Estado, EstiloZona, Mapa, Pin } from "./Mapa";
 
 export class MapaDeBuenosAires {
 
     private mapa: Mapa
 
     private estiloMunicipios: EstiloZona[] = []
+    private pines:  Pin[] = [];
 
     private nombresMunicipios: { valor: number, nombre: string }[] = []
     private nombresSecciones: { valor: number, nombre: string }[] = []
@@ -82,7 +82,7 @@ export class MapaDeBuenosAires {
             clickHabilitado: true,
             estilos: this.estiloMunicipios,
             enfoque: [],
-            pines: [],
+            pines: this.pines,
             visibilidad: {}
         })
         for (let f of this.callbackAlCambiarCapa) {
@@ -96,7 +96,7 @@ export class MapaDeBuenosAires {
             clickHabilitado: true,
             estilos: [],
             enfoque: [],
-            pines: [],
+            pines: this.pines,
             visibilidad: {}
         });
         for (let f of this.callbackAlCambiarCapa) {
@@ -183,30 +183,18 @@ export class MapaDeBuenosAires {
         return this.mapa.nombreCapaActual
     }
 
+    agregarPines(pines: Pin[]) {
+        this.pines = pines
+        this.mapa.setEstado({ pines })
+    }
+
+    quitarPines() {
+        this.pines = []
+        this.mapa.setEstado({ pines: this.pines })
+    }
+
     private formatearNombres(zonas: any[], f: (a: any) => string) {
         return zonas
             .map(z => ({ valor: Number(z.get('id')), nombre: aTitulo(f(z)) }))
-    }
-
-    private listarOpcionesEnSelect(nombres: { id: number, nombre: string }[]) {
-        const opciones = nombres
-            .sort((a, b) => a.nombre.localeCompare(b.nombre))
-            .map(data => this.crearOptionTag(data.nombre, data.id))
-
-
-        while (this.tagSelect.firstChild) {
-            this.tagSelect.removeChild(this.tagSelect.firstChild)
-        }
-        for (let opcion of opciones) {
-            this.tagSelect.appendChild(opcion)
-        }
-        this.tagSelect.prepend(this.crearOptionTag('Todo', -1))
-    }
-
-    private crearOptionTag(nombre: string, valor: number) {
-        const opt = document.createElement('option')
-        opt.value = String(valor),
-            opt.appendChild(document.createTextNode(nombre))
-        return opt
     }
 }
