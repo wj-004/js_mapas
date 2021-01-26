@@ -1,10 +1,9 @@
 import { aTitulo } from '../util/aTitulo';
-import { distritoToNombre } from '../util/distritoToNombre';
 import { Extent } from 'ol/extent';
 import { Feature, Map, MapBrowserEvent, View } from 'ol'
 import { FeatureLike } from 'ol/Feature';
 import { fromLonLat } from 'ol/proj';
-import { Funcion } from '../util/Funcion';
+import { Funcion, Funcion2 } from '../util/Funcion';
 import { GeoJSON } from 'ol/format'
 import { hexToColor } from './estilo/hexToColor';
 import { resaltar } from './estilo/resaltar';
@@ -128,6 +127,7 @@ export class Mapa {
     private callbackClickSeccion: Funcion<number, void>;
     private callbackAlClickearCualquierDistrito: Funcion<number, void>;
     private callbackAlEnfocar: Funcion<Estado, void>;
+    private callbackAlCambiarCapa: Funcion2<string, string, void>;
 
     private estilosPersonalizados: {
         [nombreCapa: string]: { [id: number]: Style },
@@ -330,7 +330,12 @@ export class Mapa {
         this.map.getLayers().push(this.entornoBsAs)
         this.map.getLayers().push(this.iconos)
 
+        const nombreCapaAnterior = this.nombreCapaActual
         this.nombreCapaActual = nombresDeCapas[nombresDeCapas.length - 1]
+
+        if (this.callbackAlCambiarCapa) {
+            this.callbackAlCambiarCapa(nombreCapaAnterior, this.nombreCapaActual)
+        }
     }
 
     private enfocarZona(ids: number[]) {
@@ -574,6 +579,10 @@ export class Mapa {
         this.callbackAlEnfocar = callback;
     }
 
+    alCambiarCapa(callback: Funcion2<string, string, void>) {
+        this.callbackAlCambiarCapa = callback
+    }
+
     private llamarCallbackEnfocar() {
         if (this.callbackAlEnfocar) {
             this.callbackAlEnfocar(this.estado);
@@ -606,102 +615,9 @@ export class Mapa {
         return iconFeature;
     }
 
-    // //INICIO DE MANEJO DE ICONOS - MODIFICAR
-    // public deleteIconFeatures() {
-    //     if (!!this.todosLosIconos && !!this.todosLosIconos.getSource()) {
-    //         const iconos = this.todosLosIconos.getSource();
-    //         iconos.getFeatures().forEach(function (feature) {
-    //             if (feature.getGeometry().getType() === 'Point') {
-    //                 iconos.removeFeature(feature);
-    //             }
-    //         });
-    //     }
-    // }
-
-    // mostrarTodosLosIconos() {
-    //     this.iconos.setVisible(false)
-    //     this.todosLosIconos.setVisible(true)
-    // }
-
-    // /**
-    //  * Muestra SOLO los pines contenidos en una zona particular
-    //  */
-    // private soloMostrarPinesDeZona(zona: Feature[]) {
-    //     const iconos = this.todosLosIconos
-    //         .getSource().getFeatures()
-
-    //         // Dejar solo los iconos validos. Por algun motivo hay iconos que tienen una (o dos) coordenadas NaN.
-    //         .filter(i => this.tieneCoordenadasValidas(i))
-
-    //         // Tomar todos los que estan DENTRO de la zona dada
-    //         .filter(i => {
-    //             const coords = (i.getGeometry() as Point).getCoordinates()
-    //             return zona.some(z => this.zonaContieneCoord(z, coords))
-    //         })
-
-    //     this.iconos.getSource().clear();
-    //     this.iconos.getSource().addFeatures(iconos)
-    //     this.todosLosIconos.setVisible(false);
-    //     this.iconos.setVisible(true);
-    // }
-
-    // private tieneCoordenadasValidas(icono: Feature): boolean {
-    //     return icono.getGeometry().getType() === GeometryType.POINT
-    //         && !isNaN((icono.getGeometry() as Point).getCoordinates()[0])
-    //         && !isNaN((icono.getGeometry() as Point).getCoordinates()[1])
-    // }
-
     private zonaContieneCoord(zona: Feature, coord: Coordinate): boolean {
         return zona.getGeometry().intersectsCoordinate(coord)
     }
-
-    // public mostrarPinesEntidadesJudiciales(nombre, entidad, lonLatAtArray) {
-    //     if (typeof entidad !== 'string') {
-    //         console.debug('addIconToFeature: tipo es distinto de string')
-    //     }
-    //     var iconoPath = "../../../" + getPinPath('TRIBUNALES', entidad);
-
-    //     this.todosLosIconos.getSource().addFeature(
-    //         this.crearIconFeature(nombre, iconoPath, lonLatAtArray)
-    //     );
-    //     return true;
-    // }
-
-    // public agregarPin(pos: { coords?: Coordinate, longLat?: [number, number] }) {
-    //     if (!pos.coords && !pos.longLat) {
-    //         throw new Error(`El pin no tienen ninguna posicion!! Pasale coords o longLat, cabeza`)
-    //     }
-
-    //     const position = pos.coords ?? pos.longLat
-
-    //     const icono = new Feature({geometry: new Point(position)})
-    //     const estilo = new Style({
-    //         image: new Icon({ anchor: [0.5, 1], scale: 0.7, src: "../../../" + getPinPath('TRIBUNALES', "PENAL") })
-    //     })
-    //     icono.setStyle(estilo);
-
-    //     this.todosLosIconos.getSource().addFeature(icono)
-    // }
-
-    // private crearIconFeature(entityName, Iconopath, latLonAsArray) {
-    //     var iconFeature = new Feature({
-    //         geometry: new Point(fromLonLat(latLonAsArray)),
-    //         name: entityName ?? ''
-    //     });
-
-    //     try {
-    //         iconFeature.setStyle(new Style({
-    //             image: new Icon({
-    //                 anchor: [0.5, 1],
-    //                 src: Iconopath,
-    //                 scale: 0.7,
-    //             })
-    //         }));
-    //     } catch (e) {
-    //         console.error("Error crearIconFeature function: " + e);
-    //     }
-    //     return iconFeature;
-    // }
 
     establecerInteraccion(interaccion, habilitar = true) {
         this.map.getInteractions().forEach(function (e) {

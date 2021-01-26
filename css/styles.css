@@ -12,6 +12,12 @@ body {
     height: 700px;
 }
 
+.map:active, .map:focus {
+  outline: 0;
+  border: none;
+  -moz-outline-style: none;
+}
+
 .popover-body {
     position:absolute;
     min-width: 180px;

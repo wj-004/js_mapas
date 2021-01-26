@@ -36,7 +36,7 @@ function mostrarUocultarSwitchDeCalles(estadoMapa: Estado) {
     const capa = estadoMapa.capas.length > 0
         ? estadoMapa.capas[estadoMapa.capas.length - 1]
         : null
-    if (capa === 'municipios' && estadoMapa.enfoque.length > 0) {
+    if (capa === 'municipios' && estadoMapa.enfoque.length == 1) {
         toggle.classList.remove('d-none')
     } else {
         toggle.classList.add('d-none')

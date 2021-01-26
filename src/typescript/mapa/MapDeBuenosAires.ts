@@ -5,7 +5,7 @@ import { aTitulo } from "../util/aTitulo";
 import { descargarZonas } from "../util/descargarZona";
 import { Funcion } from "../util/Funcion";
 import { Estado, EstiloZona, Mapa, Pin } from "./Mapa";
-import { DisplayReferencias } from "./Referencias";
+import { DisplayReferencias, Referencia } from "./Referencias";
 
 export class MapaDeBuenosAires {
 
@@ -21,6 +21,9 @@ export class MapaDeBuenosAires {
     private callbackAlClickearMunicipio:    Funcion<number, void>[] = [];
     private callbackAlClickearSeccion:      Funcion<number, void>[] = [];
     private callbackAlCambiarCapa:          Funcion<string, void>[] = [];
+
+    private referenciasDeSecciones:     Referencia[] = []
+    private referenciasDeMunicipios:    Referencia[] = []
 
     private displayReferencias: DisplayReferencias;
 
@@ -79,6 +82,14 @@ export class MapaDeBuenosAires {
                 f(id)
             }
         })
+
+        this.mapa.alCambiarCapa((anterior, actual) => {
+            if (actual === 'municipios') {
+                this.displayReferencias.referencias = this.referenciasDeMunicipios
+            } else {
+                this.displayReferencias.referencias = this.referenciasDeSecciones
+            }
+        })
     }
 
     municipios() {
@@ -90,6 +101,7 @@ export class MapaDeBuenosAires {
             pines: this.pines,
             visibilidad: {}
         })
+        this.displayReferencias.referencias = this.referenciasDeMunicipios
         for (let f of this.callbackAlCambiarCapa) {
             f('municipios')
         }
@@ -104,6 +116,7 @@ export class MapaDeBuenosAires {
             pines: this.pines,
             visibilidad: {}
         });
+        this.displayReferencias.referencias = this.referenciasDeSecciones
         for (let f of this.callbackAlCambiarCapa) {
             f('secciones')
         }
@@ -174,9 +187,20 @@ export class MapaDeBuenosAires {
     restaurarEstado(estado: Estado, emitirEventos = true) {
         this.mapa.setEstado(estado, emitirEventos)
 
-        const referenciasMaybe = localStorage.getItem('Referencias')
-        if (referenciasMaybe) {
-            this.displayReferencias.referencias = JSON.parse(referenciasMaybe)
+        const referenciasSeccionesMaybe = localStorage.getItem('ReferenciasSecciones')
+        if (referenciasSeccionesMaybe) {
+            this.referenciasDeSecciones = JSON.parse(referenciasSeccionesMaybe)
+        }
+
+        const referenciasMunicipiosMaybe = localStorage.getItem('ReferenciasMunicipios')
+        if (referenciasMunicipiosMaybe) {
+            this.referenciasDeMunicipios = JSON.parse(referenciasMunicipiosMaybe)
+        }
+
+        if (this.mapa.nombreCapaActual === 'municipios') {
+            this.displayReferencias.referencias = this.referenciasDeMunicipios
+        } else {
+            this.displayReferencias.referencias = this.referenciasDeSecciones
         }
     }
 
@@ -203,8 +227,15 @@ export class MapaDeBuenosAires {
         this.mapa.setEstado({ pines: this.pines })
     }
 
-    agregarReferencias(referencias: { nombre: string, relleno?: string, borde?: string }[]) {
-        localStorage.setItem('Referencias', JSON.stringify(referencias));
+    agregarReferencias(
+        referencias: { nombre: string, relleno?: string, borde?: string }[],
+        capa: 'municipios' | 'secciones'
+    ) {
+        if (capa == 'municipios') {
+            localStorage.setItem('ReferenciasMunicipios', JSON.stringify(referencias));
+        } else {
+            localStorage.setItem('ReferenciasSecciones', JSON.stringify(referencias));
+        }
         this.displayReferencias.referencias = referencias
     }
 
