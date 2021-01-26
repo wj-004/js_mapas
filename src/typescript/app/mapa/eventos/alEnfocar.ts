@@ -32,10 +32,13 @@ function establecerUbicacion(estadoMapa: Estado) {
  *  - Hay una o mas zonas enfocadas
  */
 function mostrarUocultarSwitchDeCalles(estadoMapa: Estado) {
-    // const toggle = document.querySelector("#showMapStreetsLabel") as HTMLLabelElement
-    // if (evento.nivel === Nivel.UN_DISTRITO) {
-    //     toggle.classList.remove('d-none')
-    // } else {
-    //     toggle.classList.add('d-none')
-    // }
+    const toggle = document.querySelector("#showMapStreetsLabel") as HTMLLabelElement
+    const capa = estadoMapa.capas.length > 0
+        ? estadoMapa.capas[estadoMapa.capas.length - 1]
+        : null
+    if (capa === 'municipios' && estadoMapa.enfoque.length > 0) {
+        toggle.classList.remove('d-none')
+    } else {
+        toggle.classList.add('d-none')
+    }
 }

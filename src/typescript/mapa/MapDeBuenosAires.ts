@@ -5,6 +5,7 @@ import { aTitulo } from "../util/aTitulo";
 import { descargarZonas } from "../util/descargarZona";
 import { Funcion } from "../util/Funcion";
 import { Estado, EstiloZona, Mapa, Pin } from "./Mapa";
+import { DisplayReferencias } from "./Referencias";
 
 export class MapaDeBuenosAires {
 
@@ -20,6 +21,8 @@ export class MapaDeBuenosAires {
     private callbackAlClickearMunicipio:    Funcion<number, void>[] = [];
     private callbackAlClickearSeccion:      Funcion<number, void>[] = [];
     private callbackAlCambiarCapa:          Funcion<string, void>[] = [];
+
+    private displayReferencias: DisplayReferencias;
 
     constructor(private tagSelect: HTMLSelectElement) {}
 
@@ -45,6 +48,8 @@ export class MapaDeBuenosAires {
         );
 
         this.mapa.setEstado({ capas: ['municipios'] });
+
+        this.displayReferencias = new DisplayReferencias(document.querySelector('.referencias'))
 
         // Inicializar select
         this.nombresMunicipios = this.formatearNombres(
@@ -168,6 +173,11 @@ export class MapaDeBuenosAires {
 
     restaurarEstado(estado: Estado, emitirEventos = true) {
         this.mapa.setEstado(estado, emitirEventos)
+
+        const referenciasMaybe = localStorage.getItem('Referencias')
+        if (referenciasMaybe) {
+            this.displayReferencias.referencias = JSON.parse(referenciasMaybe)
+        }
     }
 
     obtenerNombresDeZonas(capa: 'secciones' | 'municipios'): { nombre: string, valor: number }[] {
@@ -191,6 +201,11 @@ export class MapaDeBuenosAires {
     quitarPines() {
         this.pines = []
         this.mapa.setEstado({ pines: this.pines })
+    }
+
+    agregarReferencias(referencias: { nombre: string, relleno?: string, borde?: string }[]) {
+        localStorage.setItem('Referencias', JSON.stringify(referencias));
+        this.displayReferencias.referencias = referencias
     }
 
     private formatearNombres(zonas: any[], f: (a: any) => string) {
