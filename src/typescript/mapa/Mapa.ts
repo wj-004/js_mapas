@@ -81,7 +81,7 @@ export type Estado = {
     clickHabilitado: boolean
 }
 
-export type Pin = { latitud: number, longitud: number, color: string }
+export type Pin = { latitud: number, longitud: number, relleno: string }
 
 export type EstiloZona = { id: number, relleno?: string, borde?: string, bordeGrueso?: boolean }
 
@@ -226,6 +226,7 @@ export class Mapa {
         this.enfocarZona(this.estado.enfoque);
         this.pintarZonas(this.estado.estilos);
         this.establecerVisibilidad(this.estado.visibilidad);
+        console.log(this.estado.pines)
         this.mostrarPines(this.estado.pines);
 
         if (emitirEventos && 'enfoque' in estado) {
@@ -236,7 +237,7 @@ export class Mapa {
     private mostrarPines(pines: Pin[]) {
         this.iconos.getSource().clear()
         const iconos = pines
-            .map(pin => this.crearPin(pin.latitud, pin.longitud, pin.color))
+            .map(pin => this.crearPin(pin.latitud, pin.longitud, pin.relleno))
         this.iconos.getSource().addFeatures(iconos)
     }
 
