@@ -195,11 +195,6 @@ export class Mapa {
         this.map.on('pointermove', (e) => this.alMoverMouse(e))
         this.map.on('click', (e) => this.alHacerClick(e))
 
-        // this.listarOpcionesEnSelect(
-        //     this.todosLosDistritos.getSource().getFeatures(),
-        //     distritoToNombre
-        // )
-
         this.tagSelect.value = OPCION_TODOS
     }
 
@@ -226,7 +221,6 @@ export class Mapa {
         this.enfocarZona(this.estado.enfoque);
         this.pintarZonas(this.estado.estilos);
         this.establecerVisibilidad(this.estado.visibilidad);
-        console.log(this.estado.pines)
         this.mostrarPines(this.estado.pines);
 
         if (emitirEventos && 'enfoque' in estado) {
@@ -290,7 +284,7 @@ export class Mapa {
             if (this.nombreCapaActual === 'secciones' && proximaCapa === 'municipios') {
                 capa = 'municipios'
             }
-            const zonas = (this.capas[capa] as VectorLayer)
+            const zonas = (this.capasDisponibles[capa]() as VectorLayer)
                 .getSource()
                 .getFeatures()
                 .filter(f => proximoEstado.enfoque.includes(Number(f.get('id'))))
