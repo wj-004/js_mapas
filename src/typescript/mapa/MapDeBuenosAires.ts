@@ -160,6 +160,15 @@ export class MapaDeBuenosAires {
         })
     }
 
+    quitarEstilosDeMunicipios() {
+        this.estiloMunicipios = [];
+        if (this.mapa.nombreCapaActual === 'municipios') {
+            this.mapa.setEstado({
+                estilos: this.estiloMunicipios
+            })
+        }
+    }
+
     alClickearMunicipio(callback: Funcion<number, void>) {
         this.callbackAlClickearMunicipio.push(callback)
     }
@@ -230,13 +239,27 @@ export class MapaDeBuenosAires {
     agregarReferencias(
         referencias: { nombre: string, relleno?: string, borde?: string }[],
         capa: 'municipios' | 'secciones'
-    ) {
+    ) 
+    {
         if (capa == 'municipios') {
+            this.referenciasDeMunicipios = referencias;
             localStorage.setItem('ReferenciasMunicipios', JSON.stringify(referencias));
         } else {
+            this.referenciasDeSecciones = referencias;
             localStorage.setItem('ReferenciasSecciones', JSON.stringify(referencias));
         }
-        this.displayReferencias.referencias = referencias
+
+        this.displayReferencias.referencias = this.mapa.nombreCapaActual === 'municipios'
+            ? this.referenciasDeMunicipios
+            : this.referenciasDeSecciones
+    }
+
+    quitarReferencias() {
+        this.referenciasDeMunicipios = [];
+        this.referenciasDeSecciones = [];
+        localStorage.removeItem('ReferenciasMunicipios')
+        localStorage.removeItem('ReferenciasSecciones')
+        this.displayReferencias.referencias = []
     }
 
     private formatearNombres(zonas: any[], f: (a: any) => string) {
