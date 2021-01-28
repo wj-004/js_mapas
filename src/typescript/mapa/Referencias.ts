@@ -13,6 +13,7 @@ export class DisplayReferencias {
             const referencia = this.crearReferencia(r)
             this.contenedor.appendChild(referencia)
         }
+        this.mostrarUocultarReferencias();
     }
 
     private vaciarContenedor() {
@@ -43,5 +44,13 @@ export class DisplayReferencias {
         div.appendChild(texto)
 
         return div;
+    }
+
+    private mostrarUocultarReferencias() {
+        if (this._referencias.length > 0) {
+            this.contenedor.classList.remove('d-none')
+        } else {
+            this.contenedor.classList.add('d-none')
+        }
     }
 }
