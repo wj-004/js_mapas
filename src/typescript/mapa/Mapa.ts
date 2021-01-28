@@ -1,4 +1,3 @@
-import { aTitulo } from '../util/aTitulo';
 import { Extent } from 'ol/extent';
 import { Feature, Map, MapBrowserEvent, View } from 'ol'
 import { FeatureLike } from 'ol/Feature';
@@ -7,7 +6,6 @@ import { Funcion, Funcion2 } from '../util/Funcion';
 import { GeoJSON } from 'ol/format'
 import { hexToColor } from './estilo/hexToColor';
 import { resaltar } from './estilo/resaltar';
-import { seccionToNombre } from '../util/seccionToNombre';
 import { Style, Icon } from 'ol/style';
 import * as Control from 'ol/control';
 import * as Estilos from './Estilos'
@@ -199,17 +197,12 @@ export class Mapa {
     }
 
     /**
-     * Establece el estado del mapa. El estado del mapa esta compuesto por:
-     *  - Las capas que estan visibles
-     *  - Las zonas que estan enfocadas
-     *  - Los pines que estan visibles (PENDIENTE)
-     *  - Los colores de las zonas de la capa mas superior
-     *  - Las referencias de los colores (PENDIENTE)
+     * Establece el estado del mapa.
      * 
      * Este metodo se encarga de setear todo eso de manera incremental. Por eso
      * recibe como parametro un estado parcial, un estado que puede tener todos
-     * los atributos mencionados arriba o no. Ese estado parcial se agrega al
-     * estado "actual" del mapa, sobreescribiendo los atributos que corresponda.
+     * los atributos o no. Ese estado parcial se agrega al estado "actual" del mapa,
+     * sobreescribiendo los atributos que corresponda.
      * 
      * @param estado nuevo estado del mapa
      * @param emitirEventos bandera que indica si se emitiran o no eventos
@@ -357,7 +350,7 @@ export class Mapa {
 
     private pintarZonas(estilos: EstiloZona[]) {
         for (let estilo of estilos) {
-            const style = this.aStyle(estilo);
+            const style = this.convertirEnStyle(estilo);
             const zona = this.encontrarZona(estilo.id);
             if (zona && (!!estilo.relleno || !!estilo.borde)) {
                 zona.setStyle(style)
@@ -372,7 +365,7 @@ export class Mapa {
             : Estilos.POR_DEFECTO;
     }
 
-    private aStyle(estiloZona: EstiloZona): Style {
+    private convertirEnStyle(estiloZona: EstiloZona): Style {
         const estilo = this.getEstilo(estiloZona.id, this.nombreCapaActual).clone();
 
         if (!!estiloZona.relleno) {
@@ -508,60 +501,6 @@ export class Mapa {
         })
     }
 
-    enfocarMunicipios() {
-        this.setEstado({
-            capas: ['municipios'],
-            enfoque: [],
-            visibilidad: { zonasOcultas: [] }
-        })
-
-        // TO DO: Las interacciones deberian ser parte del estado
-        this.establecerInteraccion(Interacciones.MouseWheelZoom, true)
-        this.establecerInteraccion(Interacciones.DragPan, true)
-    }
-
-    enfocarSecciones() {
-        this.setEstado({
-            capas: ['secciones'],
-            enfoque: [],
-            visibilidad: { zonasOcultas: [] }
-        })
-
-        // TO DO: Las interacciones deberian ser parte del estado
-        this.establecerInteraccion(Interacciones.MouseWheelZoom, true)
-        this.establecerInteraccion(Interacciones.DragPan, true)
-
-        // TO DO: Esto no deberia ir aqui. En un evento tal vez.
-        this.listarOpcionesEnSelect(
-            this.capaActual.getSource().getFeatures(),
-            seccionToNombre
-        )
-        this.tagSelect.value = OPCION_TODOS
-    }
-
-    private listarOpcionesEnSelect(features: Feature[], extraerNombre: Funcion<Feature, string>) {
-        const opciones = features
-            .map(feature => ({ nombre: extraerNombre(feature), valor: feature.get('id') }))
-            .sort((a, b) => a.nombre.localeCompare(b.nombre))
-            .map(data => this.crearOptionTag(data.nombre, data.valor))
-
-
-        while (this.tagSelect.firstChild) {
-            this.tagSelect.removeChild(this.tagSelect.firstChild)
-        }
-        for (let opcion of opciones) {
-            this.tagSelect.appendChild(opcion)
-        }
-        this.tagSelect.prepend(this.crearOptionTag('Todo', -1))
-    }
-
-    private crearOptionTag(nombre: string, valor: number) {
-        const opt = document.createElement('option')
-        opt.value = String(valor),
-            opt.appendChild(document.createTextNode(aTitulo(nombre)))
-        return opt
-    }
-
     alClickearCualquierDistrito(callback: Funcion<number, void>) {
         this.callbackAlClickearCualquierDistrito = callback
     }
@@ -614,7 +553,7 @@ export class Mapa {
         return zona.getGeometry().intersectsCoordinate(coord)
     }
 
-    establecerInteraccion(interaccion, habilitar = true) {
+    private establecerInteraccion(interaccion, habilitar = true) {
         this.map.getInteractions().forEach(function (e) {
             if (e instanceof interaccion) {
                 e.setActive(habilitar);
