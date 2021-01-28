@@ -148,7 +148,9 @@ export class MapaDeBuenosAires {
         this.mapa.setEstado({
             capas: ['municipios'],
             enfoque: distritosDeSeccion,
-            visibilidad: { zonasVisibles: distritosDeSeccion }
+            visibilidad: { zonasVisibles: distritosDeSeccion },
+            estilos: this.estiloMunicipios,
+            pines: this.pines
         })
     }
 
