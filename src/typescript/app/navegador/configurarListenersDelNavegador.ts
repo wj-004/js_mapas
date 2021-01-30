@@ -1,6 +1,5 @@
 import { limpiarStorage } from "./eventos/limpiarStorage";
 import { showMapa } from "./eventos/showMap";
-import { mostrarPines } from "./eventos/mostrarPines";
 import { pintarDistritosIntendents } from "../mapa/eventos/pintarDistritosIntendents";
 import { pintarDepartamentosJudiciales } from "./eventos/pintarDepartamentosJudiciales";
 import { MapaDeBuenosAires } from "../../mapa/MapDeBuenosAires";
@@ -13,6 +12,4 @@ export function escucharEventosDeLivewire(mapa: MapaDeBuenosAires) {
     window.addEventListener('clickEnLaLupita', showMapa(mapa))
 
     window.addEventListener('limpiarStorage', limpiarStorage)
-
-    // window.addEventListener('mostrarPines', mostrarPines(mapa))
 }
