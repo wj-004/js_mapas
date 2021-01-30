@@ -5,6 +5,7 @@ import { DistritosPorIdSeccion } from "../data/DistritosPorSeccion";
 import { aTitulo } from "../util/aTitulo";
 import { descargarZonas } from "../util/descargarZona";
 import { Funcion } from "../util/Funcion";
+import { Interfaz } from "./interfaz/Interfaz";
 import { Estado, EstiloZona, Mapa, Pin } from "./Mapa";
 import { DisplayReferencias, Referencia } from "./Referencias";
 
@@ -27,6 +28,8 @@ export class MapaDeBuenosAires {
     private referenciasDeMunicipios:    Referencia[] = []
 
     private displayReferencias: DisplayReferencias;
+
+    readonly interfaz: Interfaz
 
     constructor(private tagSelect: HTMLSelectElement) {}
 
@@ -91,6 +94,8 @@ export class MapaDeBuenosAires {
                 this.displayReferencias.referencias = this.referenciasDeSecciones
             }
         })
+
+        this.interfaz = new Interfaz(this)
     }
 
     municipios() {

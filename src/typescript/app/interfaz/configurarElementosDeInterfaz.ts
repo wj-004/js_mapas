@@ -1,9 +1,8 @@
 import { MapaDeBuenosAires } from "../../mapa/MapDeBuenosAires"
 import { alClickearDistrito } from "../mapa/eventos/alClickearDistrito"
 import { clickBotonRestaurar } from "./eventos/clickBotonRestaurar"
-import { clickSelect } from "./eventos/clickSelect"
 import { clickVisualizarCalles } from "./eventos/clickVisualizarCalles"
-import { Selector } from "./selector/Selector"
+import { Selector } from "../../mapa/interfaz/Selector"
 
 export function configurarElementosDeInterfaz(mapa: MapaDeBuenosAires) {
     const showMapStreets: HTMLInputElement = document.querySelector("#showMapStreets")

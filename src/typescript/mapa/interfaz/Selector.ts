@@ -1,7 +1,7 @@
-import { DistritosPorIdSeccion } from "../../../data/DistritosPorSeccion";
-import { MapaDeBuenosAires } from "../../../mapa/MapDeBuenosAires";
-import { aTitulo } from "../../../util/aTitulo";
-import { Funcion } from "../../../util/Funcion";
+import { DistritosPorIdSeccion } from "../../data/DistritosPorSeccion";
+import { MapaDeBuenosAires } from "../../mapa/MapDeBuenosAires";
+import { aTitulo } from "../../util/aTitulo";
+import { Funcion } from "../../util/Funcion";
 
 const TODOS_LOS_MUNICIPIOS_O_SECCIONES = -1;
 const MUNICIPIOS_DE_SECCION_ACTUAL = -2;

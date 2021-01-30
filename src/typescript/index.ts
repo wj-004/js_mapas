@@ -17,9 +17,17 @@ async function inicializar() {
     await mapa.inicializar();
 
     window['mapa'] = mapa;
+
+    mapa.interfaz.municipios.alHacerClick(() => {
+        livewireEmit('clickEnTodosLosMunicipios')
+    })
+
+    mapa.interfaz.secciones.alHacerClick(() => {
+        livewireEmit('clickEnTodasLasSecciones')
+    })
     
     configurarListenersDelMapa(mapa)
-    configurarElementosDeInterfaz(mapa)
+    // configurarElementosDeInterfaz(mapa)
     escucharEventosDeLivewire(mapa)
     enfocarZonaGuardada(mapa)
 

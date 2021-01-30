@@ -1,0 +1,32 @@
+MapaDeBuenosAires
+    enfocarUnPunto
+    restaurarEstado
+    alCambiarCapa
+
+    secciones
+        enfocarTodas
+        enfocarUna
+        alClickearSeccion
+        -- pintar
+        -- despintar
+    
+    municipios
+        enfocarTodos
+        enfocarUno
+        pintar
+        despintar
+        alClickearMunicipio
+
+    referencias
+        agregar
+        quitar
+    
+    interfaz
+        select
+            alSeleccionar
+        
+        secciones
+            alHacerClick
+
+        municipios
+            alHacerClick
