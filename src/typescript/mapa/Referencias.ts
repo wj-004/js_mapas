@@ -33,7 +33,9 @@ export class DisplayReferencias {
                 circulo.style.background = r.relleno
             }
             if (r.borde) {
-                circulo.style.background = r.borde
+                circulo.style.borderWidth = "5px"
+                circulo.style.borderColor = r.borde
+                circulo.style.borderStyle = "solid"
             }
             div.appendChild(circulo)
         }
