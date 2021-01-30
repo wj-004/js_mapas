@@ -5,5 +5,5 @@ export function alClickearDistrito(id: number) {
         livewire.emit('clickEnMunicipio', id)
     }
 
-    dispatchEvent(new CustomEvent('clickEnDistrito', { detail: id }))
+    dispatchEvent(new CustomEvent('clickEnMunicipio', { detail: id }))
 }
