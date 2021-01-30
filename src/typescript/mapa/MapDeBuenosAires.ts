@@ -1,3 +1,4 @@
+import { fromLonLat } from "ol/proj";
 import { mostrarMapa } from "../app/interfaz/mostrarMapa";
 import { quitarDialogoCarga } from "../app/interfaz/quitarDialogoCarga";
 import { DistritosPorIdSeccion } from "../data/DistritosPorSeccion";
@@ -9,7 +10,7 @@ import { DisplayReferencias, Referencia } from "./Referencias";
 
 export class MapaDeBuenosAires {
 
-    private mapa: Mapa
+    mapa: Mapa
 
     private estiloMunicipios: EstiloZona[] = []
     private pines:  Pin[] = [];
@@ -99,7 +100,9 @@ export class MapaDeBuenosAires {
             estilos: this.estiloMunicipios,
             enfoque: [],
             pines: this.pines,
-            visibilidad: {}
+            visibilidad: {},
+            centro: null,
+            zoom: null
         })
         this.displayReferencias.referencias = this.referenciasDeMunicipios
         for (let f of this.callbackAlCambiarCapa) {
@@ -114,7 +117,9 @@ export class MapaDeBuenosAires {
             estilos: [],
             enfoque: [],
             pines: this.pines,
-            visibilidad: {}
+            visibilidad: {},
+            centro: null,
+            zoom: null
         });
         this.displayReferencias.referencias = this.referenciasDeSecciones
         for (let f of this.callbackAlCambiarCapa) {
@@ -139,7 +144,7 @@ export class MapaDeBuenosAires {
     }
 
     enfocarProvincia() {
-        this.mapa.setEstado({ enfoque: [] });
+        this.mapa.setEstado({ enfoque: [], centro: null, zoom: null });
     }
 
     enfocarMunicipiosDeSeccion(id: number) {
@@ -150,7 +155,9 @@ export class MapaDeBuenosAires {
             enfoque: distritosDeSeccion,
             visibilidad: { zonasVisibles: distritosDeSeccion },
             estilos: this.estiloMunicipios,
-            pines: this.pines
+            pines: this.pines,
+            centro: null,
+            zoom: null
         })
     }
 
@@ -158,7 +165,7 @@ export class MapaDeBuenosAires {
         this.estiloMunicipios = estilos;
         this.mapa.setEstado({
             capas: ['municipios'],
-            estilos: this.estiloMunicipios
+            estilos: this.estiloMunicipios,
         })
     }
 
@@ -262,6 +269,13 @@ export class MapaDeBuenosAires {
         localStorage.removeItem('ReferenciasMunicipios')
         localStorage.removeItem('ReferenciasSecciones')
         this.displayReferencias.referencias = []
+    }
+
+    enfocarPunto(punto: { latitud: number, longitud: number }) {
+        this.mapa.setEstado({
+            centro: fromLonLat([ punto.longitud, punto.latitud ]),
+            zoom: 17
+        })
     }
 
     private formatearNombres(zonas: any[], f: (a: any) => string) {

@@ -76,7 +76,11 @@ export type Estado = {
     /**
      * Indica si el usuario tiene permitido hacer click en una zona. Verdadero por defecto.
      */
-    clickHabilitado: boolean
+    clickHabilitado: boolean,
+
+    zoom: number | null,
+
+    centro: Coordinate | null
 }
 
 export type Pin = { latitud: number, longitud: number, relleno: string }
@@ -103,7 +107,9 @@ export class Mapa {
         enfoque: [],
         estilos: [],
         visibilidad: {},
-        clickHabilitado: true
+        clickHabilitado: true,
+        zoom: null,
+        centro: null
     }
     historialDeEstado: Estado[] = [];
 
@@ -215,6 +221,14 @@ export class Mapa {
         this.pintarZonas(this.estado.estilos);
         this.establecerVisibilidad(this.estado.visibilidad);
         this.mostrarPines(this.estado.pines);
+        
+        if (this.estado.zoom) {
+            this.map.getView().setZoom(this.estado.zoom)
+        }
+
+        if (this.estado.centro) {
+            this.map.getView().setCenter(this.estado.centro)
+        }
 
         if (emitirEventos && 'enfoque' in estado) {
             this.llamarCallbackEnfocar();
