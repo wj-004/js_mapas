@@ -321,10 +321,9 @@ export class Mapa {
                 : this.capasDisponibles[nombre]();
             if (capa instanceof VectorLayer) {
                 capa.setStyle(Estilos.POR_DEFECTO)
+                capa.getSource().getFeatures().forEach(f => f.setStyle(Estilos.POR_DEFECTO))
             }
-            if (!(nombre in this.estilosPersonalizados)) {
-                this.estilosPersonalizados[nombre] = {}
-            }
+            this.estilosPersonalizados[nombre] = {}
             this.map.getLayers().push(capa)
             this.capas[nombre] = capa
         }

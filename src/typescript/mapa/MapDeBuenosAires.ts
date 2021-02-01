@@ -174,13 +174,9 @@ export class MapaDeBuenosAires {
         })
     }
 
-    quitarEstilosDeMunicipios() {
+    quitarEstilos() {
         this.estiloMunicipios = [];
-        if (this.mapa.nombreCapaActual === 'municipios') {
-            this.mapa.setEstado({
-                estilos: this.estiloMunicipios
-            })
-        }
+        this.mapa.setEstado({ estilos: [] })
     }
 
     alClickearMunicipio(callback: Funcion<number, void>) {
