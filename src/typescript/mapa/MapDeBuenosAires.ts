@@ -14,6 +14,7 @@ export class MapaDeBuenosAires {
     mapa: Mapa
 
     private estiloMunicipios: EstiloZona[] = []
+    private estiloSecciones : EstiloZona[] = []
     private pines:  Pin[] = [];
 
     private nombresMunicipios: { valor: number, nombre: string }[] = []
@@ -122,7 +123,7 @@ export class MapaDeBuenosAires {
         this.mapa.setEstado({
             capas: ['secciones'],
             clickHabilitado: true,
-            estilos: [],
+            estilos: this.estiloSecciones,
             enfoque: [],
             pines: this.pines,
             visibilidad: {},
@@ -171,14 +172,22 @@ export class MapaDeBuenosAires {
 
     pintarMunicipios(estilos: EstiloZona[]) {
         this.estiloMunicipios = estilos;
+
+        // PELIGRO: este metodo solo deberia setear los estilos, no cambiar las capas
+
         this.mapa.setEstado({
             capas: ['municipios'],
             estilos: this.estiloMunicipios,
         })
     }
 
+    pintarSecciones(estilos: EstiloZona[]) {
+        this.estiloSecciones = estilos;
+    }
+
     quitarEstilos() {
-        this.estiloMunicipios = [];
+        this.estiloMunicipios   = [];
+        this.estiloSecciones    = [];
         this.mapa.setEstado({ estilos: [] })
     }
 
