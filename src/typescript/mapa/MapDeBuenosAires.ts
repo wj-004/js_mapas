@@ -29,7 +29,8 @@ export class MapaDeBuenosAires {
 
     private displayReferencias: DisplayReferencias;
 
-    readonly interfaz: Interfaz
+    private _interfaz: Interfaz
+    get interfaz() { return this._interfaz }
 
     constructor(private tagSelect: HTMLSelectElement) {}
 
@@ -95,7 +96,7 @@ export class MapaDeBuenosAires {
             }
         })
 
-        this.interfaz = new Interfaz(this)
+        this._interfaz = new Interfaz(this)
     }
 
     municipios() {

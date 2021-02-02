@@ -1,12 +1,7 @@
-import { configurarElementosDeInterfaz } from "./app/interfaz/configurarElementosDeInterfaz";
-import { mostrarMapa } from "./app/interfaz/mostrarMapa";
-import { quitarDialogoCarga } from "./app/interfaz/quitarDialogoCarga";
 import { configurarListenersDelMapa } from "./app/mapa/configurarListenersDelMapa";
 import { enfocarZonaGuardada } from "./app/mapa/enfocarFeatureGuardado";
 import { escucharEventosDeLivewire } from "./app/navegador/configurarListenersDelNavegador";
-import { Mapa } from "./mapa/Mapa";
 import { MapaDeBuenosAires } from "./mapa/MapDeBuenosAires";
-import { descargarZonas } from "./util/descargarZona";
 import { livewireEmit } from "./util/livewireEmit";
 
 window.onload = inicializar
@@ -27,7 +22,6 @@ async function inicializar() {
     })
     
     configurarListenersDelMapa(mapa)
-    // configurarElementosDeInterfaz(mapa)
     escucharEventosDeLivewire(mapa)
     enfocarZonaGuardada(mapa)
 
