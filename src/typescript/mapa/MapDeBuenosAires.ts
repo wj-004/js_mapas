@@ -83,6 +83,8 @@ export class MapaDeBuenosAires {
         })
 
         this.mapa.alClickearCualquierSeccion(id => {
+            this.enfocarMunicipiosDeSeccion(id)
+
             for (let f of this.callbackAlClickearSeccion) {
                 f(id)
             }

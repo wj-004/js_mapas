@@ -271,18 +271,6 @@ export class Mapa {
          */
         const clickHabilitado = !(proximoEstado.enfoque.length === 1)
 
-        // Revisar si se cambiar de la capa "secciones" a la capa "municipios"
-        const nombreProximaCapa = proximoEstado.capas[proximoEstado.capas.length - 1]
-
-        let estilos = proximoEstado.estilos;
-
-        if (this.nombreCapaActual !== nombreProximaCapa) {
-            if (this.nombreCapaActual === 'secciones' && nombreProximaCapa === 'municipios') {
-                estilos = estadoActual.estilos
-                    .filter(estilo => proximoEstado.enfoque.includes(estilo.id))
-            }
-        }
-
         let pines = proximoEstado.pines
 
         if (proximoEstado.enfoque.length > 0 && pines.length > 0) {
@@ -304,7 +292,7 @@ export class Mapa {
                 )
         }
 
-        return { ...proximoEstado, clickHabilitado, estilos, pines }
+        return { ...proximoEstado, clickHabilitado, pines }
     }
 
     /**
@@ -465,14 +453,6 @@ export class Mapa {
 
     private alClickearSeccion(seccion: Feature) {
         const id = Number(seccion.get('id'));
-
-        const distritosDeSeccion = DistritosPorIdSeccion[id];
-
-        this.setEstado({
-            capas: ['municipios'],
-            enfoque: distritosDeSeccion,
-            visibilidad: { zonasVisibles: distritosDeSeccion }
-        })
 
         if (this.callbackClickSeccion) {
             this.callbackClickSeccion(id)
