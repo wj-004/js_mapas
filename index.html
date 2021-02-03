@@ -22,61 +22,66 @@
 </head>
 
 <body>
-    <div class="col-12 col-sm-12 col-md-5 col-lg-5 col-xl-5" style="background-color: #015875; color:#ffffff">
-        <div class="row bg-info p-2">
-            <span class="mr-1">Mapa Interactivo</span>
-            <span id="ubicacion"></span>
-        </div>
-        <br>
-        <div id="listado" class="col-sm-12 col-md-7">
-            <div class="row backgroundContainer mt-4 mt-md-0">
-                <select name="featuresList" id="idSecciones" class="form-control w-100 select2-hidden-accessible"
-                    onchange="obtenerDatosFeature()" tabindex="-1" aria-hidden="true">
-                    <option value="-1">Todos</option>
+    <div class="row">
+        <div class="col-5">
+            
+
+            <div class="card mapa__cuerpo">
+                <div class="mapa__titulo bg-info    ">
+                    <span class="">Mapa Interactivo</span>
+                    <span id="ubicacion"></span>
+                </div>
+        
+                <select id="idSecciones" class="custom-select custom-select-lg mapa__select">
+                        <option value="-1">Todos</option>
                 </select>
+        
+                <div class="dialogo-carga--container mapa__dialogo-carga">
+                    <div class="shadow dialogo-carga--dialogo">
+                        <span class="m-2">Cargando</span>
+        
+                        <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
+                    </div>
+                </div>
+        
+                <div class="mapa--container mapa__mapa-container d-none">
+                    <div class="d-flex justify-content-center">
+                        <div id="map" class="map" tabindex="0"></div>
+                        <div id="top-popup" class="rounded"></div>
+                    </div>
+        
+                    <div class="referencias mapa__referencias d-none">
+                    </div>
+                </div>
+        
+                <div class="mapa--controles mapa__controles d-none">
+                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                        <label class="btn btn-info active">
+                            <input type="radio" onclick="selectLayer()" name="mapShowOption" id="showSecciones"
+                                autocomplete="off" value='1' checked> SECCIONES
+                        </label>
+                        <label class="btn btn-info">
+                            <input type="radio" onclick="selectLayer()" name="mapShowOption" id="showDistritos"
+                                autocomplete="off" value='2'> MUNICIPIOS
+                        </label>
+                        <label class="btn btn-info">
+                            <input type="radio" onclick="selectLayer()" name="mapShowOption" id="initialShow"
+                                autocomplete="off" value='3'> RESTAURAR
+                        </label>
+                    </div>
+        
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="showMapStreets">
+                        <label id="showMapStreetsLabel" class="d-none custom-control-label" for="showMapStreets">VISUALIZAR CALLES</label>
+                    </div>
+                </div>
             </div>
+
+
         </div>
-        <div class="row d-flex justify-content-center align-items-center">
-            <div class="mt-4 mt-md-0 d-flex dialogo-carga--container">
-                <div class="shadow dialogo-carga--dialogo">
-                    <span class="m-2">Cargando</span>
 
-                    <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
-                </div>
-            </div>
-
-            <div class="mt-4 mt-md-0 mapa--container align-items-center flex-column d-none">
-                <div class="col-md-12 d-flex justify-content-center">
-                    <div id="map" class="map" tabindex="0"></div>
-                    <div id="top-popup" title="" class="rounded"></div>
-                </div>
-
-                <div class="referencias d-none">
-                </div>
-            </div>
-
-            <div class="py-3 mapa--controles d-none">
-                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                    <label class="btn btn-info active">
-                        <input type="radio" onclick="selectLayer()" name="mapShowOption" id="showSecciones"
-                            autocomplete="off" value='1' checked> SECCIONES
-                    </label>
-                    <label class="btn btn-info">
-                        <input type="radio" onclick="selectLayer()" name="mapShowOption" id="showDistritos"
-                            autocomplete="off" value='2'> MUNICIPIOS
-                    </label>
-                    <label class="btn btn-info ml-2">
-                        <input type="radio" onclick="selectLayer()" name="mapShowOption" id="initialShow"
-                            autocomplete="off" value='3'> RESTAURAR
-                    </label>
-                </div>
-
-                <div class="custom-control custom-switch">
-                    <input type="checkbox" class="custom-control-input" id="showMapStreets">
-                    <label id="showMapStreetsLabel" class="d-none custom-control-label" for="showMapStreets">VISUALIZAR CALLES</label>
-                </div>
-
-            </div>
+        <div class="col-7">
+            <h1>PLACEHOLDER</h1>
         </div>
     </div>
     
