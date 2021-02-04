@@ -17,7 +17,8 @@ type EstadoSelector = {
 export class Selector {
     private _estado: EstadoSelector
 
-    private callbackAlSeleccionar: Funcion<number, void>[] = []
+    private callbackAlSeleccionarMunicipio  : Funcion<number, void>[] = []
+    private callbackAlSeleccionarSeccion    : Funcion<number, void>[] = []
 
     constructor(
         private select: HTMLSelectElement,
@@ -45,8 +46,12 @@ export class Selector {
         }
     }
 
-    alSeleccionar(callback: Funcion<number, void>) {
-        this.callbackAlSeleccionar.push(callback)
+    alSeleccionarMunicipio(callback: Funcion<number, void>) {
+        this.callbackAlSeleccionarMunicipio.push(callback)
+    }
+
+    alSeleccionarSeccion(callback: Funcion<number, void>) {
+        this.callbackAlSeleccionarMunicipio.push(callback)
     }
 
     private set estado(e: EstadoSelector) {
@@ -69,7 +74,13 @@ export class Selector {
         this.actualizarMapa(estadoAnterior, this.estado)
 
         if (this.estado.capa === 'municipios' && this.estado.valor !== TODOS_LOS_MUNICIPIOS_O_SECCIONES) {
-            for (let f of this.callbackAlSeleccionar) {
+            for (let f of this.callbackAlSeleccionarMunicipio) {
+                f(valor)
+            }
+        }
+
+        if (this.estado.capa === 'secciones' && this.estado.valor !== MUNICIPIOS_DE_SECCION_ACTUAL) {
+            for (let f of this.callbackAlSeleccionarSeccion) {
                 f(valor)
             }
         }

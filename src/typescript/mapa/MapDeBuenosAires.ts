@@ -100,6 +100,18 @@ export class MapaDeBuenosAires {
         })
 
         this._interfaz = new Interfaz(this)
+
+        this._interfaz.select.alSeleccionarMunicipio(id => {
+            for (let f of this.callbackAlClickearMunicipio) {
+                f(id)
+            }
+        })
+
+        this._interfaz.select.alSeleccionarSeccion(id => {
+            for (let f of this.callbackAlClickearSeccion) {
+                f(id)
+            }
+        })
     }
 
     municipios() {
@@ -289,6 +301,29 @@ export class MapaDeBuenosAires {
             centro: fromLonLat([ punto.longitud, punto.latitud ]),
             zoom: 17
         })
+    }
+
+    mostrarMunicipio(id: number) {
+        this.mapa.setEstado({
+            capas: ['municipios'],
+            clickHabilitado: true,
+            estilos: this.estiloMunicipios,
+            enfoque: [id],
+            pines: this.pines,
+            visibilidad: { zonasVisibles: [ id ] },
+            centro: null,
+            zoom: null
+        })
+    }
+
+    hayMunicipioGuardado() {
+        const estadoGuardado: Estado = JSON.parse(localStorage.getItem('EstadoMapa'));
+        if (estadoGuardado) {
+            const capa = estadoGuardado.capas[estadoGuardado.capas.length - 1]
+            return capa === 'municipios' && estadoGuardado.enfoque.length === 1;
+        } else {
+            return false;
+        }
     }
 
     private formatearNombres(zonas: any[], f: (a: any) => string) {

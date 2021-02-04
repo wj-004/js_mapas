@@ -1,5 +1,5 @@
 import { configurarListenersDelMapa } from "./app/mapa/configurarListenersDelMapa";
-import { enfocarZonaGuardada } from "./app/mapa/enfocarFeatureGuardado";
+import { aplicarEstadoGuardado } from "./app/mapa/enfocarFeatureGuardado";
 import { escucharEventosDeLivewire } from "./app/navegador/configurarListenersDelNavegador";
 import { MapaDeBuenosAires } from "./mapa/MapDeBuenosAires";
 import { livewireEmit } from "./util/livewireEmit";
@@ -20,10 +20,14 @@ async function inicializar() {
     mapa.interfaz.secciones.alHacerClick(() => {
         livewireEmit('clickEnTodasLasSecciones')
     })
+
+    mapa.interfaz.restaurar.alHacerClick(() => {
+        livewireEmit('clickEnRestaurar')
+    })
     
     configurarListenersDelMapa(mapa)
     escucharEventosDeLivewire(mapa)
-    enfocarZonaGuardada(mapa)
+    aplicarEstadoGuardado(mapa)
 
     livewireEmit('mapaListo');
     dispatchEvent(new CustomEvent('mapaListo', { detail: mapa }));
