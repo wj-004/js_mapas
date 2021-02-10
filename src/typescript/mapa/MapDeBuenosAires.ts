@@ -4,7 +4,7 @@ import { quitarDialogoCarga } from "../app/interfaz/quitarDialogoCarga";
 import { DistritosPorIdSeccion } from "../data/DistritosPorSeccion";
 import { aTitulo } from "../util/aTitulo";
 import { descargarZonas } from "../util/descargarZona";
-import { Funcion } from "../util/Funcion";
+import { Funcion, Funcion2 } from "../util/Funcion";
 import { Interfaz } from "./interfaz/Interfaz";
 import { Estado, EstiloZona, Mapa, Pin } from "./Mapa";
 import { DisplayReferencias, Referencia } from "./Referencias";
@@ -24,13 +24,14 @@ export class MapaDeBuenosAires {
     private callbackAlClickearMunicipio:    Funcion<number, void>[] = [];
     private callbackAlClickearSeccion:      Funcion<number, void>[] = [];
     private callbackAlCambiarCapa:          Funcion<string, void>[] = [];
+    private callbackAlResaltar:             Funcion2<number, string, void>[]  = [];
 
     private referenciasDeSecciones:     Referencia[] = []
     private referenciasDeMunicipios:    Referencia[] = []
 
     private displayReferencias: DisplayReferencias;
 
-    private _interfaz: Interfaz
+private _interfaz: Interfaz
     get interfaz() { return this._interfaz }
 
     constructor(private tagSelect: HTMLSelectElement) {}
@@ -96,6 +97,12 @@ export class MapaDeBuenosAires {
                 this.displayReferencias.referencias = this.referenciasDeMunicipios
             } else {
                 this.displayReferencias.referencias = this.referenciasDeSecciones
+            }
+        })
+
+        this.mapa.alResaltar((id, nombre) => {
+            for (let cb of this.callbackAlResaltar) {
+                cb(id, nombre)
             }
         })
 
@@ -217,6 +224,10 @@ export class MapaDeBuenosAires {
 
     alCambiarCapa(callback: Funcion<string, void>) {
         this.callbackAlCambiarCapa.push(callback)
+    }
+
+    alResaltar(callback: Funcion2<number, string, void>) {
+        this.callbackAlResaltar.push(callback)
     }
 
     alternarVisibilidadDeCalles(mostrar: boolean) {

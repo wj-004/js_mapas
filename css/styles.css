@@ -8,8 +8,8 @@ body {
 }
 
 .map {
-    width: 400px;
-    height: 700px;
+  width: 320px;
+  height: 468px;
 }
 
 .map:active, .map:focus {
@@ -100,15 +100,10 @@ body {
 }
 
 .mapa__titulo {
-  display: flex;
-  gap: 10px;
-
+  text-align: center;
   padding: 10px;
-  background: #17a2b8;
   font-size: 1.1rem;
-  margin-bottom: 20px;
-  border-top-left-radius: 0.25rem;
-  border-top-right-radius: 0.25rem;
+  min-height: 50px;
 }
 
 .mapa__select {
@@ -118,6 +113,7 @@ body {
 
 .mapa__controles {
   align-self: center;
+  margin-top: 10px;
 }
 
 .mapa__dialogo-carga {
@@ -128,8 +124,8 @@ body {
   align-items: center;
   justify-content: center;
 
-  width: 400px;
-  height: 700px;
+  width: 320px;
+  height: 468px;
 }
 
 .mapa__mapa-container {
@@ -150,4 +146,18 @@ body {
   padding: 10px;
   border: 1px solid #44d0ff;
   border-radius: 5px;
+}
+
+@media screen
+  and (min-width: 1680px)
+{
+  .map {
+    width: 480px;
+    height: 700px;
+  }
+
+  .mapa__dialogo-carga {
+    width: 480px;
+    height: 700px;
+  }
 }

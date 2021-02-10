@@ -20,7 +20,6 @@ import Stroke from 'ol/style/Stroke';
 import TileLayer from 'ol/layer/Tile'
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
-import { DistritosPorIdSeccion } from '../data/DistritosPorSeccion';
 import { Coordinate } from 'ol/coordinate';
 
 const extentBuenosAires = [...fromLonLat([-64, -42]), ...fromLonLat([-56, -32])] as Extent
@@ -132,6 +131,7 @@ export class Mapa {
     private callbackAlClickearCualquierDistrito: Funcion<number, void>;
     private callbackAlEnfocar: Funcion<Estado, void>;
     private callbackAlCambiarCapa: Funcion2<string, string, void>;
+    private callbackAlResaltar: Funcion2<number, string, void>;
 
     private estilosPersonalizados: {
         [nombreCapa: string]: { [id: number]: Style },
@@ -413,22 +413,30 @@ export class Mapa {
             }
 
             this.elementoResaltado = null;
+
+            if (this.callbackAlResaltar) {
+                this.callbackAlResaltar(null, '')
+            }
         }
 
         this.map.forEachFeatureAtPixel(evento.pixel, feature => {
             //if agregado para evitar click sobre el entorno -- REEMPLAZAR por mascara (clipping) cuando haya tiempo
             if (feature.get('id') != '99999' && feature.getGeometry().getType() != 'Point') {
+                // Resaltar zona
                 this.elementoResaltado = feature;
-
                 const id = this.elementoResaltado.get('id');
-
                 const estiloPersonalizado = this.getEstilo(Number(id), this.nombreCapaActual);
-
                 const estilo: Style = !!estiloPersonalizado
                     ? resaltar(estiloPersonalizado)
                     : Estilos.RESALTADO;
-
                 (this.elementoResaltado as Feature).setStyle(estilo)
+
+                // Llamar callbacks
+                if (this.callbackAlResaltar) {
+                    this.callbackAlResaltar(Number(id), this.getNombre(this.elementoResaltado))
+                }
+
+                // Es necesario esto? Revisar API de OpenLayers
                 return true;
             }
         })
@@ -510,6 +518,10 @@ export class Mapa {
         this.callbackAlCambiarCapa = callback
     }
 
+    alResaltar(callback: Funcion2<number, string, void>) {
+        this.callbackAlResaltar = callback
+    }
+
     private llamarCallbackEnfocar() {
         if (this.callbackAlEnfocar) {
             this.callbackAlEnfocar(this.estado);
@@ -552,5 +564,11 @@ export class Mapa {
                 e.setActive(habilitar);
             }
         });
+    }
+
+    private getNombre(f: FeatureLike): string {
+        return !!f.get('nombreSeccion')
+            ? f.get('nombreSeccion')
+            : f.get('nombreDistrito')
     }
 }

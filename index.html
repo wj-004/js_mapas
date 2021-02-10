@@ -25,16 +25,12 @@
     <div class="row">
         <div class="col-5">
             
-
             <div class="card mapa__cuerpo">
-                <div class="mapa__titulo bg-info    ">
-                    <span class="">Mapa Interactivo</span>
-                    <span id="ubicacion"></span>
-                </div>
-        
                 <select id="idSecciones" class="custom-select custom-select-lg mapa__select">
                         <option value="-1">Todos</option>
                 </select>
+
+                <span id="titulo" class="mapa__titulo"></span>
         
                 <div class="dialogo-carga--container mapa__dialogo-carga">
                     <div class="shadow dialogo-carga--dialogo">
@@ -47,11 +43,9 @@
                 <div class="mapa--container mapa__mapa-container d-none">
                     <div class="d-flex justify-content-center">
                         <div id="map" class="map" tabindex="0"></div>
-                        <div id="top-popup" class="rounded"></div>
                     </div>
         
-                    <div class="referencias mapa__referencias d-none">
-                    </div>
+                    <div class="referencias mapa__referencias d-none"></div>
                 </div>
         
                 <div class="mapa--controles mapa__controles d-none">

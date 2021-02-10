@@ -2,6 +2,8 @@ import { Selector } from "./Selector";
 import { MapaDeBuenosAires } from "../MapDeBuenosAires";
 import { Button } from "./Button";
 import { Checkbox } from "./CheckBox";
+import { Span } from "./Span";
+import { aTitulo } from "../../util/aTitulo";
 
 export class Interfaz {
     readonly select         : Selector;
@@ -9,6 +11,7 @@ export class Interfaz {
     readonly municipios     : Button;
     readonly restaurar      : Button;
     readonly switchCalles   : Checkbox;
+    readonly titulo         : Span;
 
     constructor(private mapa: MapaDeBuenosAires) {
         this.select = new Selector(
@@ -46,6 +49,12 @@ export class Interfaz {
 
         this.switchCalles.alHacerClick(boton => {
             this.mapa.alternarVisibilidadDeCalles(boton.checked)
+        })
+
+        this.titulo = new Span(document.querySelector('#titulo'));
+
+        this.mapa.alResaltar((id, nombre) => {
+            this.titulo.setTexto(aTitulo(nombre))
         })
     }
 }
