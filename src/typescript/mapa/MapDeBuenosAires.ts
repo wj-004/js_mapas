@@ -177,11 +177,14 @@ private _interfaz: Interfaz
 
     enfocarMunicipiosDeSeccion(id: number) {
         const distritosDeSeccion = DistritosPorIdSeccion[id];
+        this.enfocarMunicipios(distritosDeSeccion);
+    }
 
+    enfocarMunicipios(ids: number[]) {
         this.mapa.setEstado({
             capas: ['municipios'],
-            enfoque: distritosDeSeccion,
-            visibilidad: { zonasVisibles: distritosDeSeccion },
+            enfoque: ids,
+            visibilidad: { zonasVisibles: ids },
             estilos: this.estiloMunicipios,
             pines: this.pines,
             centro: null,

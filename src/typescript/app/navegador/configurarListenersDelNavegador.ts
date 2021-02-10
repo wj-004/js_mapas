@@ -12,4 +12,9 @@ export function escucharEventosDeLivewire(mapa: MapaDeBuenosAires) {
     window.addEventListener('clickEnLaLupita', showMapa(mapa))
 
     window.addEventListener('limpiarStorage', limpiarStorage)
+
+    window.addEventListener('mostrarMunicipios', (evento: any) => {
+        const ids = evento.detail as number[];
+        mapa.enfocarMunicipios(ids);
+    })
 }
