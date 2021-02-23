@@ -17,4 +17,12 @@ export function escucharEventosDeLivewire(mapa: MapaDeBuenosAires) {
         const ids = evento.detail as number[];
         mapa.enfocarMunicipios(ids);
     })
+
+    window.addEventListener('mostrarTodosLosMunicipios', () => {
+        mapa.municipios()
+    })
+
+    window.addEventListener('quitarPines', () => {
+        mapa.quitarPines()
+    })
 }

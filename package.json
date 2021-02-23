@@ -8,7 +8,8 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "compile": "npx rollup -c rollup.config.js"
+    "compile": "npx rollup -c rollup.config.js",
+    "docs": "typedoc src/typescript/index.ts --includes src/typescript/mapa/*.ts --excludePrivate --out ./docs"
   },
   "repository": {
     "type": "git",
